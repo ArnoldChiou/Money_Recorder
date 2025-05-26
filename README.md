@@ -45,8 +45,8 @@
 
 1.  **複製儲存庫 (Clone the repository):**
     ```bash
-    git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
-    cd your-repo-name
+    git clone [https://github.com/ArnoldChiou/Money_Recorder.git](https://github.com/ArnoldChiou/Money_Recorder.git)
+    cd Money_Recorder
     ```
 2.  **安裝依賴:**
     在專案根目錄下執行：
@@ -132,7 +132,7 @@ src/
 
 ## 🤝 貢獻
 
-歡迎各種形式的貢獻！如果您有任何建議或發現問題，請隨時提出 [Issue](https://github.com/your-username/your-repo-name/issues)。
+歡迎各種形式的貢獻！如果您有任何建議或發現問題，請隨時提出 [Issue](https://github.com/ArnoldChiou/Money_Recorder.git/issues)。
 
 如果您想貢獻程式碼，請遵循以下步驟：
 

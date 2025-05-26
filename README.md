@@ -45,7 +45,7 @@
 
 1.  **複製儲存庫 (Clone the repository):**
     ```bash
-    git clone [https://github.com/ArnoldChiou/Money_Recorder.git](https://github.com/ArnoldChiou/Money_Recorder.git)
+    git clone [https://github.com/ArnoldChiou/Money_Recorder.git](https://github.com/ArnoldChiou/Money_Recorder)
     cd Money_Recorder
     ```
 2.  **安裝依賴:**

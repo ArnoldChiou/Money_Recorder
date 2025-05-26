@@ -1,5 +1,5 @@
 // src/components/SummaryReport.tsx
-import React, { useMemo, FC } from 'react';
+import { useMemo, FC } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 interface Summary {

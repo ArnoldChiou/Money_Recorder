@@ -1,5 +1,6 @@
-// src/App.jsx
-import React, { useState, useEffect } from 'react';
+// src/App.tsx
+import * as React from 'react';
+import { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import TransactionForm from './components/TransactionForm';
 import TransactionList from './components/TransactionList';
@@ -7,65 +8,64 @@ import SummaryReport from './components/SummaryReport';
 import CategoryPieChart from './components/CategoryPieChart';
 import MonthlyTrendChart from './components/MonthlyTrendChart';
 import AddNewModal from './components/AddNewModal';
-import { useAppContext } from './contexts/AppContext';
+import { TransactionType, ModalConfig } from './types';
 
-function App() {
-    const { state, dispatch } = useAppContext();
-    const [currentFormType, setCurrentFormType] = useState('expense');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalConfig, setModalConfig] = useState({
+const App: React.FC = () => {
+    const [currentFormType, setCurrentFormType] = useState<TransactionType>('expense');
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [modalConfig, setModalConfig] = useState<ModalConfig>({
         mode: '',
         transactionType: 'expense',
         categoryName: '',
         activeSelectElement: null
     });
 
-    const handleOpenModal = (mode, transactionType, categoryName = '', activeSelectElement) => {
-        setModalConfig({ mode, transactionType, categoryName, activeSelectElement });
+    const handleOpenModal = (
+        mode: 'category' | 'item',
+        transactionType: TransactionType,
+        categoryName: string = '',
+        activeSelectElement?: HTMLSelectElement | null
+    ) => {
+        setModalConfig({ mode, transactionType, categoryName, activeSelectElement: activeSelectElement || null });
         setIsModalOpen(true);
     };
-    const handleCloseModalAndRefresh = (newlyAddedValue = null) => {
+
+    const handleCloseModalAndRefresh = (newlyAddedValue: string | null = null) => {
         setIsModalOpen(false);
         const { activeSelectElement } = modalConfig;
+
         if (activeSelectElement) {
             let shouldTriggerChange = false;
+
             if (newlyAddedValue) {
-                let foundAndSelected = false;
-                for (let i = 0; i < activeSelectElement.options.length; i++) {
-                    if (activeSelectElement.options[i].value === newlyAddedValue) {
-                        activeSelectElement.value = newlyAddedValue;
-                        foundAndSelected = true;
-                        break;
+                const trySelect = (value: string) => {
+                    const optionExists = Array.from(activeSelectElement.options as unknown as HTMLOptionElement[]).some(opt => opt.value === value);
+                    if (optionExists) {
+                        activeSelectElement.value = value;
+                        const event = new Event('change', { bubbles: true });
+                        activeSelectElement.dispatchEvent(event);
                     }
+                    return optionExists;
+                };
+
+                if (!trySelect(newlyAddedValue)) {
+                     setTimeout(() => trySelect(newlyAddedValue), 50);
                 }
-                if (!foundAndSelected) {
-                    if (activeSelectElement.closest('#transaction-form')) {
-                        setTimeout(() => {
-                            if (activeSelectElement.querySelector(`option[value="${newlyAddedValue}"]`)) {
-                                activeSelectElement.value = newlyAddedValue;
-                                const event = new Event('change', { bubbles: true });
-                                activeSelectElement.dispatchEvent(event);
-                            }
-                        }, 0);
-                    }
-                } else {
-                    shouldTriggerChange = true;
-                }
+
             } else if (activeSelectElement.value.startsWith('__add_new_')) {
-                if (activeSelectElement.options.length > 1) {
-                    const firstValidOption = Array.from(activeSelectElement.options).find(opt => !opt.value.startsWith('__add_new_'));
-                    activeSelectElement.value = firstValidOption ? firstValidOption.value : "";
-                } else {
-                    activeSelectElement.value = "";
-                }
+                const firstValidOption = Array.from(activeSelectElement.options as unknown as HTMLOptionElement[]).find(opt => !opt.value.startsWith('__add_new_'));
+                activeSelectElement.value = firstValidOption ? firstValidOption.value : "";
                 shouldTriggerChange = true;
             }
+
             if (shouldTriggerChange) {
                 const event = new Event('change', { bubbles: true });
                 activeSelectElement.dispatchEvent(event);
             }
         }
+        setModalConfig({ mode: '', transactionType: 'expense', categoryName: '', activeSelectElement: null });
     };
+
 
     return (
         <div className="flex min-h-screen bg-gradient-to-br from-slate-100 to-slate-200">

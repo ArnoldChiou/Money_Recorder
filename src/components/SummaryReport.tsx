@@ -1,12 +1,18 @@
-//財務總覽組件
-import React, { useMemo } from 'react';
+// src/components/SummaryReport.tsx
+import React, { useMemo, FC } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
-function SummaryReport() {
+interface Summary {
+    totalIncome: number;
+    totalExpense: number;
+    netAmount: number;
+}
+
+const SummaryReport: FC = () => {
     const { state } = useAppContext();
     const { transactions } = state;
 
-    const summary = useMemo(() => {
+    const summary: Summary = useMemo(() => {
         let totalIncome = 0;
         let totalExpense = 0;
         transactions.forEach(t => {
@@ -20,7 +26,7 @@ function SummaryReport() {
         return { totalIncome, totalExpense, netAmount };
     }, [transactions]);
 
-    const formatCurrency = (amount) => {
+    const formatCurrency = (amount: number): string => {
         return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 

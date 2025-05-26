@@ -1,22 +1,26 @@
-// src/components/TransactionList.jsx
-import React from 'react';
+// src/components/TransactionList.tsx
+import * as React from 'react';
 import TransactionItem from './TransactionItem';
 import { useAppContext } from '../contexts/AppContext';
+import { TransactionType } from '../types';
 
-function TransactionList({ openModal }) {
+interface TransactionListProps {
+    openModal: (mode: 'category' | 'item', transactionType: TransactionType, categoryName?: string, activeSelectElement?: HTMLSelectElement | null) => void;
+}
+
+const TransactionList: React.FC<TransactionListProps> = ({ openModal }) => {
     const { state } = useAppContext();
     const { transactions } = state;
 
     if (transactions.length === 0) {
-        return <div className="text-center text-gray-500 py-8">目前沒有任何紀錄。</div>; // 增加上下間距
+        return <div className="text-center text-gray-500 py-8">目前沒有任何紀錄。</div>;
     }
 
     return (
-        <div className="overflow-x-auto shadow border-b border-gray-200 sm:rounded-lg"> {/* 添加陰影和圓角 */}
+        <div className="overflow-x-auto shadow border-b border-gray-200 sm:rounded-lg">
             <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                     <tr>
-                        {/* 表頭樣式微調 */}
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">日期</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">類型</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">分類</th>
@@ -26,8 +30,7 @@ function TransactionList({ openModal }) {
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {/* *** 修改：傳遞 index *** */}
-                    {transactions.map((transaction, index) => (
+                    {transactions.map((transaction: any, index: number) => (
                         <TransactionItem key={transaction.id} transaction={transaction} openModal={openModal} index={index} />
                     ))}
                 </tbody>

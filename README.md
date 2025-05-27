@@ -45,7 +45,7 @@
 
 1.  **複製儲存庫 (Clone the repository):**
     ```bash
-    git clone [https://github.com/ArnoldChiou/Money_Recorder.git](https://github.com/ArnoldChiou/Money_Recorder)
+    git clone https://github.com/ArnoldChiou/Money_Recorder.git
     cd Money_Recorder
     ```
 2.  **安裝依賴:**
@@ -55,6 +55,9 @@
     # 或
     yarn install
     ```
+3.  **設定FireBase:**
+    複製firebaseConfig_example.ts並重新命名為firebaseConfig.ts
+    將firebase設定貼上取代
 
 ### 開發模式
 

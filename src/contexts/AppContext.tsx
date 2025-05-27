@@ -1,8 +1,8 @@
 // src/contexts/AppContext.tsx
 import * as React from 'react';
 import { createContext, useReducer, useEffect, useContext, ReactNode, FC } from 'react';
-import { AppState, AppAction, Transaction, UserDefinedData, TransactionType, AppContextType } from '../types';
-import { db } from '../firebaseConfig'; // 引入 Firestore 實例
+import { AppState, AppAction, Transaction, UserDefinedData, TransactionType, AppContextType, Account } from '../types';
+import { db } from '../firebaseConfig';
 import {
     collection,
     addDoc,
@@ -14,12 +14,13 @@ import {
     orderBy,
     getDoc,
     setDoc,
-    DocumentData, // 引入 DocumentData 類型
-    QueryDocumentSnapshot // 引入 QueryDocumentSnapshot 類型
+    DocumentData,
+    QueryDocumentSnapshot
 } from "firebase/firestore";
 
 const TRANSACTIONS_COLLECTION = 'transactions';
 const USER_DATA_DOC_PATH = 'userData/main';
+const ACCOUNTS_COLLECTION = 'accounts';
 
 const initialState: AppState = {
     transactions: [],
@@ -32,7 +33,8 @@ const initialState: AppState = {
             expense: {"餐飲": ["早餐", "午餐", "晚餐", "飲料", "零食"], "交通": ["捷運/公車"]},
             income: {"薪資": ["月薪"], "投資": ["股息"]}
         }
-    }
+    },
+    accounts: []
 };
 
 const AppContext = createContext<AppContextType>({
@@ -40,27 +42,28 @@ const AppContext = createContext<AppContextType>({
     dispatch: () => null
 });
 
-// Reducer 現在主要負責根據 Firestore 的更新來設定狀態
 const appReducer = (state: AppState, action: AppAction): AppState => {
     switch (action.type) {
         case 'SET_TRANSACTIONS':
             return { ...state, transactions: action.payload };
         case 'SET_USER_DATA':
              return { ...state, userDefinedData: action.payload };
-        // 保留這些 case 但不做任何事，或印出警告，因為操作已移至非同步函式
+        case 'SET_ACCOUNTS':
+             return { ...state, accounts: action.payload };
         case 'ADD_TRANSACTION':
         case 'DELETE_TRANSACTION':
         case 'UPDATE_TRANSACTION':
         case 'ADD_CATEGORY':
         case 'ADD_ITEM':
+        case 'ADD_ACCOUNT':
+        case 'UPDATE_ACCOUNT':
+        case 'DELETE_ACCOUNT':
              console.warn(`Action ${action.type} should be handled via async Firebase calls and onSnapshot updates.`);
              return state;
         default:
             return state;
     }
 };
-
-// --- 非同步 Firebase 函式 (匯出供組件使用) ---
 
 export const addTransactionToFirebase = async (transactionData: Omit<Transaction, 'id'>) => {
     try {
@@ -99,6 +102,39 @@ export const updateUserDataInFirebase = async (newUserData: UserDefinedData) => 
     }
 };
 
+export const addAccountToFirebase = async (accountData: Omit<Account, 'id'>) => {
+    try {
+        await addDoc(collection(db, ACCOUNTS_COLLECTION), accountData);
+    } catch (error) {
+        console.error("Error adding account: ", error);
+        alert("新增帳戶失敗，請檢查網路連線或稍後再試。");
+    }
+};
+
+export const updateAccountInFirebase = async (account: Account) => {
+    try {
+        const { id, ...dataToUpdate } = account;
+        if (!id) {
+            console.error("Account ID is missing for update");
+            alert("更新帳戶失敗：帳戶ID缺失。");
+            return;
+        }
+        await updateDoc(doc(db, ACCOUNTS_COLLECTION, id), dataToUpdate);
+    } catch (error) {
+        console.error("Error updating account: ", error);
+        alert("更新帳戶失敗！");
+    }
+};
+
+export const deleteAccountFromFirebase = async (id: string) => {
+    try {
+        await deleteDoc(doc(db, ACCOUNTS_COLLECTION, id));
+    } catch (error) {
+        console.error("Error deleting account: ", error);
+        alert("刪除帳戶失敗！");
+    }
+};
+
 interface AppProviderProps {
     children: ReactNode;
 }
@@ -106,7 +142,6 @@ interface AppProviderProps {
 export const AppProvider: FC<AppProviderProps> = ({ children }) => {
     const [state, dispatch] = useReducer(appReducer, initialState);
 
-    // 監聽 Transactions 集合的變化
     useEffect(() => {
         const q = query(collection(db, TRANSACTIONS_COLLECTION), orderBy("date", "desc"));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -117,13 +152,10 @@ export const AppProvider: FC<AppProviderProps> = ({ children }) => {
             dispatch({ type: 'SET_TRANSACTIONS', payload: transactionsFromDb });
         }, (error) => {
             console.error("Error listening to transactions: ", error);
-            alert("無法載入交易紀錄！");
         });
-
         return () => unsubscribe();
     }, []);
 
-    // 監聽 UserData 文件的變化
     useEffect(() => {
         const docRef = doc(db, USER_DATA_DOC_PATH);
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
@@ -135,9 +167,21 @@ export const AppProvider: FC<AppProviderProps> = ({ children }) => {
             }
         }, (error) => {
             console.error("Error listening to user data: ", error);
-             alert("無法載入分類/項目資料！");
         });
+        return () => unsubscribe();
+    }, []);
 
+    useEffect(() => {
+        const q = query(collection(db, ACCOUNTS_COLLECTION), orderBy("name"));
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const accountsFromDb: Account[] = [];
+            querySnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+                accountsFromDb.push({ id: doc.id, ...doc.data() } as Account);
+            });
+            dispatch({ type: 'SET_ACCOUNTS', payload: accountsFromDb });
+        }, (error) => {
+            console.error("Error listening to accounts: ", error);
+        });
         return () => unsubscribe();
     }, []);
 

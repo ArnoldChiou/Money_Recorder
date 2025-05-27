@@ -156,6 +156,7 @@ const Sidebar: React.FC = () => {
                   <a href="#form-section-target" className="sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200" onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📝 新增記錄</a>
                   <a href="#list-section-target" className="sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200" onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📋 收支列表</a>
                   <a href="#report-section-target" className="sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200" onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📈 財務總覽</a>
+                  <a href="#accounts" className="sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200" onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📂 帳戶管理</a>
                 </div>
                 <div
                     id="sidebar-resizer"

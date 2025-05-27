@@ -24,6 +24,7 @@ export interface UserDefinedData {
 export interface AppState {
   transactions: Transaction[];
   userDefinedData: UserDefinedData;
+  accounts: Account[]; // <-- 新增
 }
 
 export type AppAction =
@@ -33,7 +34,11 @@ export type AppAction =
   | { type: 'DELETE_TRANSACTION'; payload: string } // <-- 從 number 改為 string
   | { type: 'UPDATE_TRANSACTION'; payload: Transaction }
   | { type: 'ADD_CATEGORY'; payload: { type: TransactionType; categoryName: string } }
-  | { type: 'ADD_ITEM'; payload: { type: TransactionType; categoryName: string; itemName: string } };
+  | { type: 'ADD_ITEM'; payload: { type: TransactionType; categoryName: string; itemName: string } }
+  | { type: 'SET_ACCOUNTS'; payload: Account[] } // <-- 新增
+  | { type: 'ADD_ACCOUNT'; payload: Account } // <-- 新增 (用於本地更新，實際操作通過Firebase)
+  | { type: 'UPDATE_ACCOUNT'; payload: Account } // <-- 新增 (用於本地更新，實際操作通過Firebase)
+  | { type: 'DELETE_ACCOUNT'; payload: string }; // <-- 新增 (用於本地更新，實際操作通過Firebase)
 
 export interface AppContextType {
     state: AppState;
@@ -46,3 +51,25 @@ export interface ModalConfig {
     categoryName: string;
     activeSelectElement: HTMLSelectElement | null;
 }
+
+export interface Account {
+  id: string;
+  name: string;
+  type: 'asset' | 'liability';
+  category: AssetCategory | LiabilityCategory;
+  balance: number;
+}
+
+export type AssetCategory = '銀行存款' | '錢包' | '證券' | '加密貨幣' | '電子票證';
+export type LiabilityCategory = '信用卡' | '信用卡分期付款' | '貸款';
+
+export type LoanType = '房貸' | '信貸' | '車貸'; // Optional: if you want to specify loan types
+
+// If you have specific properties for different account types,
+// you might want to create more specific interfaces, for example:
+// export interface LoanAccount extends Account {
+//   category: '貸款';
+//   loanType: LoanType;
+//   interestRate?: number;
+//   dueDate?: string;
+// }

@@ -19,6 +19,13 @@ const App: React.FC = () => {
         categoryName: '',
         activeSelectElement: null
     });
+    const [newlyAddedItem, setNewlyAddedItem] = useState<string | null>(null);
+
+    React.useEffect(() => {
+        const handler = () => setNewlyAddedItem(null);
+        window.addEventListener('clearNewlyAddedItem', handler);
+        return () => window.removeEventListener('clearNewlyAddedItem', handler);
+    }, []);
 
     const handleOpenModal = (
         mode: 'category' | 'item',
@@ -32,26 +39,36 @@ const App: React.FC = () => {
 
     const handleCloseModalAndRefresh = (newlyAddedValue: string | null = null) => {
         setIsModalOpen(false);
-        const { activeSelectElement } = modalConfig;
+        const { activeSelectElement, mode } = modalConfig;
+
+        if (mode === 'item' && newlyAddedValue) {
+            setNewlyAddedItem(newlyAddedValue);
+        }
 
         if (activeSelectElement) {
             let shouldTriggerChange = false;
 
             if (newlyAddedValue) {
+                let attempts = 0;
+                const maxAttempts = 10;
                 const trySelect = (value: string) => {
                     const optionExists = Array.from(activeSelectElement.options as unknown as HTMLOptionElement[]).some(opt => opt.value === value);
                     if (optionExists) {
                         activeSelectElement.value = value;
                         const event = new Event('change', { bubbles: true });
                         activeSelectElement.dispatchEvent(event);
+                        return true;
                     }
-                    return optionExists;
+                    return false;
                 };
-
-                if (!trySelect(newlyAddedValue)) {
-                     setTimeout(() => trySelect(newlyAddedValue), 50);
-                }
-
+                const tryUntilSuccess = () => {
+                    if (trySelect(newlyAddedValue!)) return;
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(tryUntilSuccess, 100);
+                    }
+                };
+                tryUntilSuccess();
             } else if (activeSelectElement.value.startsWith('__add_new_')) {
                 const firstValidOption = Array.from(activeSelectElement.options as unknown as HTMLOptionElement[]).find(opt => !opt.value.startsWith('__add_new_'));
                 activeSelectElement.value = firstValidOption ? firstValidOption.value : "";
@@ -65,7 +82,6 @@ const App: React.FC = () => {
         }
         setModalConfig({ mode: '', transactionType: 'expense', categoryName: '', activeSelectElement: null });
     };
-
 
     return (
         <div className="flex min-h-screen bg-gradient-to-br from-slate-100 to-slate-200">
@@ -88,6 +104,7 @@ const App: React.FC = () => {
                             currentFormType={currentFormType}
                             setCurrentFormType={setCurrentFormType}
                             openModal={handleOpenModal}
+                            newlyAddedItem={newlyAddedItem}
                         />
                     </section>
                     <section id="list-section-target" className="bg-white/90 rounded-2xl shadow-xl p-4 md:p-6 border border-slate-200">

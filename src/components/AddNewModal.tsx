@@ -69,9 +69,11 @@ const AddNewModal: FC<AddNewModalProps> = ({ isOpen, onClose, config }) => {
     };
 
     return (
-        <div className="modal active">
-            <div className="modal-content">
-                <span className="modal-close-btn" onClick={() => onClose(null)}>&times;</span>
+        <div className="modal active fixed inset-0 flex items-center justify-center z-50">
+            {/* 背景遮罩 */}
+            <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => onClose(null)} />
+            <div className="modal-content relative bg-white rounded-lg shadow-lg p-6 z-10 min-w-[320px] max-w-[90vw]">
+                <span className="modal-close-btn absolute top-2 right-3 text-2xl cursor-pointer" onClick={() => onClose(null)}>&times;</span>
                 <h3 className="text-xl font-semibold mb-4">
                     {mode === 'category' ? `新增${typeLabel}分類` : `新增項目至 ${typeLabel}分類 "${categoryName}"`}
                 </h3>

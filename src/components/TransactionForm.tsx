@@ -9,9 +9,10 @@ interface TransactionFormProps {
     currentFormType: TransactionType;
     setCurrentFormType: (type: TransactionType) => void;
     openModal: (mode: 'category' | 'item', transactionType: TransactionType, categoryName?: string, activeSelectElement?: HTMLSelectElement | null) => void;
+    newlyAddedItem?: string | null; // 新增
 }
 
-const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrentFormType, openModal }) => {
+const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrentFormType, openModal, newlyAddedItem }) => {
     const { state } = useAppContext(); // <-- 移除了 dispatch
     const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [category, setCategory] = useState<string>('');
@@ -23,13 +24,23 @@ const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrent
 
     useEffect(() => {
         const currentCategories = state.userDefinedData.categories[currentFormType] || [];
-        setCategory(currentCategories.length > 0 ? currentCategories[0] : '');
-    }, [currentFormType, state.userDefinedData.categories]);
+        // Only set/reset category if no category is selected or the current one is invalid
+        if (!category || !currentCategories.includes(category)) {
+            setCategory(currentCategories.length > 0 ? currentCategories[0] : '');
+        }
+    }, [currentFormType, state.userDefinedData.categories, category]); // Added category to dependencies
 
     useEffect(() => {
-        const currentItems = (category && state.userDefinedData.items[currentFormType]?.[category]) || [];
-        setDescription(currentItems.length > 0 ? currentItems[0] : '');
-    }, [category, currentFormType, state.userDefinedData.items]);
+        // items is derived from the current category
+        if (newlyAddedItem && items.includes(newlyAddedItem)) {
+            setDescription(newlyAddedItem);
+        } else {
+            // Only set/reset description if no description is selected or the current one is invalid for the items list
+            if (!description || !items.includes(description)) {
+                setDescription(items.length > 0 ? items[0] : ''); // Default to the first item
+            }
+        }
+    }, [items, newlyAddedItem, description]); // Added description to dependencies
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => { // <--- 改為 async
         e.preventDefault();

@@ -3,6 +3,7 @@ import * as React from 'react';
 import { useState, useEffect, FC, ChangeEvent } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { Transaction, TransactionType } from '../types';
+import { deleteTransactionFromFirebase, updateTransactionInFirebase } from '../contexts/AppContext'; // <--- 引入
 
 interface TransactionItemProps {
     transaction: Transaction;
@@ -23,7 +24,7 @@ const getCategoryColorClass = (category: string, type: TransactionType): string 
 };
 
 const TransactionItem: FC<TransactionItemProps> = ({ transaction, openModal, index }) => {
-    const { state, dispatch } = useAppContext();
+    const { state } = useAppContext(); // <-- 移除了 dispatch
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [editData, setEditData] = useState<Transaction>({ ...transaction });
 
@@ -45,6 +46,7 @@ const TransactionItem: FC<TransactionItemProps> = ({ transaction, openModal, ind
         }
     }, [editData.category, editData.type, isEditing, state.userDefinedData.items, editData.description]);
 
+
     const handleEditToggle = () => {
         if (isEditing) {
             setEditData({ ...transaction });
@@ -58,7 +60,7 @@ const TransactionItem: FC<TransactionItemProps> = ({ transaction, openModal, ind
 
         if (name === 'amount') {
             const parsedValue = parseFloat(value);
-            newAmount = isNaN(parsedValue) ? 0 : parsedValue; // Handle NaN, default to 0 or keep old?
+            newAmount = isNaN(parsedValue) ? 0 : parsedValue;
         }
 
         const updatedData = {
@@ -87,20 +89,20 @@ const TransactionItem: FC<TransactionItemProps> = ({ transaction, openModal, ind
         }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => { // <--- 改為 async
         if (!editData.category || editData.category.startsWith('__add_new_') ||
             !editData.description || editData.description.startsWith('__add_new_') || editData.description === "" ||
             isNaN(editData.amount) || editData.amount <= 0) {
             alert("請填寫所有有效欄位並選擇有效的項目。");
             return;
         }
-        dispatch({ type: 'UPDATE_TRANSACTION', payload: editData });
+        await updateTransactionInFirebase(editData); // <--- 呼叫 Firebase 函式
         setIsEditing(false);
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => { // <--- 改為 async
         if (window.confirm('您確定要刪除這筆紀錄嗎？')) {
-            dispatch({ type: 'DELETE_TRANSACTION', payload: transaction.id });
+            await deleteTransactionFromFirebase(transaction.id); // <--- 呼叫 Firebase 函式
         }
     };
 

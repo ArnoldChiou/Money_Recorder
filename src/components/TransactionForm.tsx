@@ -3,6 +3,7 @@ import * as React from 'react';
 import { useState, useEffect, FC, ChangeEvent, FormEvent } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { TransactionType } from '../types';
+import { addTransactionToFirebase } from '../contexts/AppContext'; // <--- 引入
 
 interface TransactionFormProps {
     currentFormType: TransactionType;
@@ -11,7 +12,7 @@ interface TransactionFormProps {
 }
 
 const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrentFormType, openModal }) => {
-    const { state, dispatch } = useAppContext();
+    const { state } = useAppContext(); // <-- 移除了 dispatch
     const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [category, setCategory] = useState<string>('');
     const [description, setDescription] = useState<string>('');
@@ -30,20 +31,24 @@ const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrent
         setDescription(currentItems.length > 0 ? currentItems[0] : '');
     }, [category, currentFormType, state.userDefinedData.items]);
 
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => { // <--- 改為 async
         e.preventDefault();
         const parsedAmount = parseFloat(amount);
         if (!category || category.startsWith('__add_new_') || !description || description.startsWith('__add_new_') || description === "" || !amount || isNaN(parsedAmount) || parsedAmount <= 0) {
             alert("請填寫所有有效欄位並選擇有效的項目。");
             return;
         }
-        dispatch({
-            type: 'ADD_TRANSACTION',
-            payload: { id: Date.now(), type: currentFormType, date, category, description, amount: parsedAmount }
+        // 不需要 dispatch，直接呼叫 Firebase 函式
+        await addTransactionToFirebase({ // <--- 呼叫，不包含 id
+            type: currentFormType,
+            date,
+            category,
+            description,
+            amount: parsedAmount
         });
-        setDate(new Date().toISOString().split('T')[0]);
+        // 清空表單 (除了日期)
         setAmount('');
-        // category and description will be reset by useEffects.
+        // Category 和 Description 會由 useEffect 自動設定
     };
 
     const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {

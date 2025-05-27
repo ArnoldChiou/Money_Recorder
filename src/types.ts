@@ -2,7 +2,7 @@
 export type TransactionType = 'expense' | 'income';
 
 export interface Transaction {
-  id: number;
+  id: string; // <-- 從 number 改為 string
   type: TransactionType;
   date: string;
   category: string;
@@ -27,9 +27,10 @@ export interface AppState {
 }
 
 export type AppAction =
-  | { type: 'SET_INITIAL_DATA'; payload: { transactions: Transaction[]; userDefinedData: UserDefinedData } }
+  | { type: 'SET_TRANSACTIONS'; payload: Transaction[] } // <-- 新增
+  | { type: 'SET_USER_DATA'; payload: UserDefinedData } // <-- 新增
   | { type: 'ADD_TRANSACTION'; payload: Transaction }
-  | { type: 'DELETE_TRANSACTION'; payload: number }
+  | { type: 'DELETE_TRANSACTION'; payload: string } // <-- 從 number 改為 string
   | { type: 'UPDATE_TRANSACTION'; payload: Transaction }
   | { type: 'ADD_CATEGORY'; payload: { type: TransactionType; categoryName: string } }
   | { type: 'ADD_ITEM'; payload: { type: TransactionType; categoryName: string; itemName: string } };

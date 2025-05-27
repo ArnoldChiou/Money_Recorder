@@ -2,7 +2,8 @@
 import * as React from 'react';
 import { useState, useEffect, FC, ChangeEvent } from 'react';
 import { useAppContext } from '../contexts/AppContext';
-import { ModalConfig } from '../types'; // Correct path, types.ts exists in src
+import { ModalConfig, TransactionType } from '../types';
+import { updateUserDataInFirebase } from '../contexts/AppContext'; // <--- 引入
 
 interface AddNewModalProps {
     isOpen: boolean;
@@ -11,7 +12,7 @@ interface AddNewModalProps {
 }
 
 const AddNewModal: FC<AddNewModalProps> = ({ isOpen, onClose, config }) => {
-    const { dispatch, state } = useAppContext();
+    const { state } = useAppContext(); // <-- 移除了 dispatch，只保留 state
     const [name, setName] = useState<string>('');
     const [message, setMessage] = useState<string>('');
 
@@ -26,7 +27,7 @@ const AddNewModal: FC<AddNewModalProps> = ({ isOpen, onClose, config }) => {
     const typeLabel = transactionType === 'expense' ? '支出' : '收入';
     const modeLabel = mode === 'category' ? '分類' : '項目';
 
-    const handleSave = () => {
+    const handleSave = async () => { // <--- 改為 async
         setMessage('');
         const trimmedName = name.trim();
         if (!trimmedName) {
@@ -34,25 +35,37 @@ const AddNewModal: FC<AddNewModalProps> = ({ isOpen, onClose, config }) => {
             return;
         }
 
+        // 深層複製目前的 userDefinedData，避免直接修改 state
+        const newUserData = JSON.parse(JSON.stringify(state.userDefinedData));
+        const currentCategories = newUserData.categories[transactionType] || [];
+        const currentItems = newUserData.items[transactionType] || {};
+
         if (mode === 'category') {
-            if (state.userDefinedData.categories[transactionType]?.includes(trimmedName)) {
+            if (currentCategories.includes(trimmedName)) {
                 setMessage(`分類 "${trimmedName}" 已存在！`);
                 return;
             }
-            dispatch({ type: 'ADD_CATEGORY', payload: { type: transactionType, categoryName: trimmedName } });
-            onClose(trimmedName);
+            newUserData.categories[transactionType] = [...currentCategories, trimmedName];
+            // 確保新增分類時，items 中也有對應的空陣列
+            if (!newUserData.items[transactionType]) {
+                 newUserData.items[transactionType] = {};
+            }
+            newUserData.items[transactionType][trimmedName] = [];
+
         } else if (mode === 'item') {
-            if (!categoryName || !state.userDefinedData.items[transactionType]?.[categoryName]) {
+            if (!categoryName || !currentItems[categoryName]) {
                  setMessage(`無法新增項目：分類 "${categoryName}" 不存在或無效。`);
                  return;
             }
-            if (state.userDefinedData.items[transactionType]?.[categoryName]?.includes(trimmedName)) {
+            if (currentItems[categoryName].includes(trimmedName)) {
                 setMessage(`項目 "${trimmedName}" 在分類 "${categoryName}" 中已存在！`);
                 return;
             }
-            dispatch({ type: 'ADD_ITEM', payload: { type: transactionType, categoryName, itemName: trimmedName } });
-            onClose(trimmedName);
+            newUserData.items[transactionType][categoryName] = [...currentItems[categoryName], trimmedName];
         }
+
+        await updateUserDataInFirebase(newUserData); // <--- 呼叫 Firebase 函式更新
+        onClose(trimmedName); // 關閉 Modal 並傳回新值
     };
 
     return (

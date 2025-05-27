@@ -126,3 +126,5 @@ public/build/
 # Vite build output
 dist/
 dist-ssr/
+
+src/firebaseConfig.ts

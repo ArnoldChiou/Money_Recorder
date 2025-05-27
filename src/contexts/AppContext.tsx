@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { createContext, useReducer, useEffect, useContext, ReactNode, FC } from 'react';
 import { AppState, AppAction, Transaction, UserDefinedData, TransactionType, AppContextType, Account } from '../types';
-import { db } from '../firebaseConfig';
+import { db } from '../firebaseConfig_example';
 import {
     collection,
     addDoc,

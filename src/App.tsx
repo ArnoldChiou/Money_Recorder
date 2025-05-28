@@ -4,16 +4,18 @@ import { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import TransactionForm from './components/TransactionForm';
 import TransactionList from './components/TransactionList';
-import SummaryReport from './components/SummaryReport';
-import CategoryPieChart from './components/CategoryPieChart';
-import MonthlyTrendChart from './components/MonthlyTrendChart';
-import AddNewModal from './components/AddNewModal';
-import AccountManagement from './components/AccountManagement'; // <-- Import AccountManagement
-import AuthModal from './components/AuthModal';
 import { useAuthUser } from './hooks/useAuthUser';
 import { signOut } from 'firebase/auth';
 import { auth } from './firebaseConfig';
 import { TransactionType, ModalConfig } from './types';
+import { Suspense } from 'react';
+
+const SummaryReport = React.lazy(() => import('./components/SummaryReport'));
+const CategoryPieChart = React.lazy(() => import('./components/CategoryPieChart'));
+const MonthlyTrendChart = React.lazy(() => import('./components/MonthlyTrendChart'));
+const AddNewModal = React.lazy(() => import('./components/AddNewModal'));
+const AccountManagement = React.lazy(() => import('./components/AccountManagement'));
+const AuthModal = React.lazy(() => import('./components/AuthModal'));
 
 const App: React.FC = () => {
     const { user, loading } = useAuthUser();
@@ -98,11 +100,13 @@ const App: React.FC = () => {
     if (!user) {
         return (
             <>
-                <AuthModal
-                    isOpen={true}
-                    onClose={() => setShowAuthModal(false)}
-                    onAuthSuccess={() => {}}
-                />
+                <Suspense fallback={<div>載入中...</div>}>
+                    <AuthModal
+                        isOpen={true}
+                        onClose={() => setShowAuthModal(false)}
+                        onAuthSuccess={() => {}}
+                    />
+                </Suspense>
             </>
         );
     }
@@ -146,13 +150,19 @@ const App: React.FC = () => {
                         <h2 className="text-lg md:text-xl font-semibold text-slate-700 mb-6 text-center flex items-center justify-center gap-2">
                             <span className="inline-block bg-purple-100 text-purple-600 rounded px-2 py-0.5 text-sm">財務總覽與分析</span>
                         </h2>
-                        <SummaryReport />
+                        <Suspense fallback={<div>載入中...</div>}>
+                            <SummaryReport />
+                        </Suspense>
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 md:gap-10 items-start mt-6">
                             <div className="bg-slate-50 rounded-xl shadow p-4 md:p-6 border border-slate-100">
-                                <CategoryPieChart />
+                                <Suspense fallback={<div>載入中...</div>}>
+                                    <CategoryPieChart />
+                                </Suspense>
                             </div>
                             <div className="bg-slate-50 rounded-xl shadow p-4 md:p-6 border border-slate-100">
-                                <MonthlyTrendChart />
+                                <Suspense fallback={<div>載入中...</div>}>
+                                    <MonthlyTrendChart />
+                                </Suspense>
                                 <section id="accounts" className="bg-white/90 rounded-2xl shadow-xl p-4 md:p-6 border border-slate-200">
                                     <h2 className="text-lg md:text-xl font-semibold text-slate-700 mb-4 flex items-center gap-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -160,20 +170,24 @@ const App: React.FC = () => {
                                         </svg>
                                         帳戶管理
                                     </h2>
-                                    <AccountManagement />
+                                    <Suspense fallback={<div>載入中...</div>}>
+                                        <AccountManagement />
+                                    </Suspense>
                                 </section>
                             </div>
                         </div>
                     </section>
                 </div>
             </main>
-            {isModalOpen && (
-                <AddNewModal
-                    isOpen={isModalOpen}
-                    onClose={handleCloseModalAndRefresh}
-                    config={modalConfig}
-                />
-            )}
+            <Suspense fallback={<div>載入中...</div>}>
+                {isModalOpen && (
+                    <AddNewModal
+                        isOpen={isModalOpen}
+                        onClose={handleCloseModalAndRefresh}
+                        config={modalConfig}
+                    />
+                )}
+            </Suspense>
         </div>
     );
 }

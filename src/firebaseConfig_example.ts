@@ -1,27 +1,29 @@
-// Import the functions you need from the SDKs you need
+// src/firebaseConfig.ts
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getAuth } from "firebase/auth";
+// 如果您暫時不用 Analytics，可以先移除，簡化問題
+// import { getAnalytics } from "firebase/analytics"; 
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// ====================================================================
 const firebaseConfig = {
-  apiKey: "example" ,
-  authDomain:"example" ,
-  projectId:"example" ,
-  storageBucket:"example" ,
-  messagingSenderId:"example" ,
-  appId:"example" ,
-  measurementId:"example" ,
+apiKey: "Example",
+authDomain: "Example",
+projectId: "Example",
+storageBucket: "Example",
+messagingSenderId: "Example",
+appId: "Example",
+measurementId: "Example"
 };
+// ====================================================================
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+// const analytics = getAnalytics(app); // 暫時移除
+
 // 取得 Firestore 實例
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-// 匯出 db 供其他組件使用
-export { db };
+// 匯出 db 和 auth 供其他組件使用
+export { db, auth };

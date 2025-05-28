@@ -59,6 +59,7 @@
     複製firebaseConfig_example.ts並重新命名為firebaseConfig.ts
     將firebase設定貼上取代
 
+
 ### 開發模式
 
 啟動本地開發伺服器：
@@ -79,6 +80,13 @@ yarn dev
 npm run build
 # 或
 yarn build
+```
+
+```bash
+npm install -g firebase-tools
+firebase login
+firebase init
+firebase deploy
 ```
 
 建置後的檔案會存放在 `dist` 目錄下。您可以將此目錄的內容部署到任何靜態網站託管服務。

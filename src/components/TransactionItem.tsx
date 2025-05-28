@@ -4,6 +4,7 @@ import { useState, useEffect, FC, ChangeEvent } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { Transaction, TransactionType } from '../types';
 import { deleteTransactionFromFirebase, updateTransactionInFirebase } from '../contexts/AppContext'; // <--- 引入
+import { useAuthUser } from '../hooks/useAuthUser';
 
 interface TransactionItemProps {
     transaction: Transaction;
@@ -25,6 +26,8 @@ const getCategoryColorClass = (category: string, type: TransactionType): string 
 
 const TransactionItem: FC<TransactionItemProps> = ({ transaction, openModal, index }) => {
     const { state } = useAppContext(); // <-- 移除了 dispatch
+    const { user } = useAuthUser();
+    const userId = user?.uid;
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [editData, setEditData] = useState<Transaction>({ ...transaction });
 
@@ -89,20 +92,26 @@ const TransactionItem: FC<TransactionItemProps> = ({ transaction, openModal, ind
         }
     };
 
-    const handleSave = async () => { // <--- 改為 async
-        if (!editData.category || editData.category.startsWith('__add_new_') ||
-            !editData.description || editData.description.startsWith('__add_new_') || editData.description === "" ||
-            isNaN(editData.amount) || editData.amount <= 0) {
+    const handleSave = async () => {
+        if (!userId) {
+            alert('請先登入');
+            return;
+        }
+        if (!editData.category || !editData.description || !editData.amount || isNaN(Number(editData.amount))) {
             alert("請填寫所有有效欄位並選擇有效的項目。");
             return;
         }
-        await updateTransactionInFirebase(editData); // <--- 呼叫 Firebase 函式
+        await updateTransactionInFirebase(editData, userId); // <--- 呼叫 Firebase 函式
         setIsEditing(false);
     };
 
-    const handleDelete = async () => { // <--- 改為 async
+    const handleDelete = async () => {
+        if (!userId) {
+            alert('請先登入');
+            return;
+        }
         if (window.confirm('您確定要刪除這筆紀錄嗎？')) {
-            await deleteTransactionFromFirebase(transaction.id); // <--- 呼叫 Firebase 函式
+            await deleteTransactionFromFirebase(transaction.id, userId); // <--- 呼叫 Firebase 函式
         }
     };
 

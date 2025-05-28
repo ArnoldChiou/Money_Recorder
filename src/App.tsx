@@ -9,9 +9,16 @@ import CategoryPieChart from './components/CategoryPieChart';
 import MonthlyTrendChart from './components/MonthlyTrendChart';
 import AddNewModal from './components/AddNewModal';
 import AccountManagement from './components/AccountManagement'; // <-- Import AccountManagement
+import AuthModal from './components/AuthModal';
+import { useAuthUser } from './hooks/useAuthUser';
+import { signOut } from 'firebase/auth';
+import { auth } from './firebaseConfig';
 import { TransactionType, ModalConfig } from './types';
 
 const App: React.FC = () => {
+    const { user, loading } = useAuthUser();
+    const userId = user?.uid;
+    const [showAuthModal, setShowAuthModal] = useState(false);
     const [currentFormType, setCurrentFormType] = useState<TransactionType>('expense');
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [modalConfig, setModalConfig] = useState<ModalConfig>({
@@ -84,6 +91,22 @@ const App: React.FC = () => {
         setModalConfig({ mode: '', transactionType: 'expense', categoryName: '', activeSelectElement: null });
     };
 
+    if (loading) {
+        return <div className="flex items-center justify-center min-h-screen">載入中...</div>;
+    }
+
+    if (!user) {
+        return (
+            <>
+                <AuthModal
+                    isOpen={true}
+                    onClose={() => setShowAuthModal(false)}
+                    onAuthSuccess={() => {}}
+                />
+            </>
+        );
+    }
+
     return (
         <div className="flex min-h-screen bg-gradient-to-br from-slate-100 to-slate-200">
             <Sidebar />
@@ -96,6 +119,10 @@ const App: React.FC = () => {
                         <p className="text-slate-500 text-base md:text-lg text-center max-w-xl">
                             快速記錄、分析你的日常收支，讓財務一目了然。
                         </p>
+                        <div className="absolute top-4 right-4">
+                            <span className="mr-2 text-gray-600">{user.email}</span>
+                            <button onClick={() => signOut(auth)} className="text-sm text-indigo-600 hover:underline">登出</button>
+                        </div>
                     </header>
                     <section id="form-section-target" className="bg-white/90 rounded-2xl shadow-xl p-4 md:p-6 border border-slate-200">
                         <h2 className="text-lg md:text-xl font-semibold text-slate-700 mb-4 flex items-center gap-2">

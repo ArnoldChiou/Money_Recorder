@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext'; // Import useAppContext
 import { addAccountToFirebase, updateAccountInFirebase, deleteAccountFromFirebase } from '../contexts/AppContext'; // Import Firebase functions
 import { Account, AssetCategory, LiabilityCategory } from '../types';
+import { useAuthUser } from '../hooks/useAuthUser';
 
 const AccountManagement: React.FC = () => {
   const { state } = useAppContext(); // Use global state, dispatch is not directly used here for setting accounts
   const { accounts } = state; // Get accounts from global state
+  const { user } = useAuthUser();
+  const userId = user?.uid;
 
   const [showModal, setShowModal] = useState(false);
   const [currentAccount, setCurrentAccount] = useState<Account | null>(null);
@@ -42,8 +45,12 @@ const AccountManagement: React.FC = () => {
   };
 
   const handleDeleteAccountClick = async (accountId: string) => { // Renamed to avoid conflict if any
+    if (!userId) {
+      alert('請先登入');
+      return;
+    }
     if (window.confirm('確定要刪除此帳戶嗎？')) {
-      await deleteAccountFromFirebase(accountId);
+      await deleteAccountFromFirebase(accountId, userId);
       // Firestore listener in AppContext will update the state
     }
   };
@@ -51,7 +58,10 @@ const AccountManagement: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const category = accountType === 'asset' ? assetCategory : liabilityCategory;
-    
+    if (!userId) {
+      alert('請先登入');
+      return;
+    }
     if (currentAccount) {
       const updatedAccount: Account = {
         ...currentAccount,
@@ -60,7 +70,7 @@ const AccountManagement: React.FC = () => {
         category,
         balance
       };
-      await updateAccountInFirebase(updatedAccount);
+      await updateAccountInFirebase(updatedAccount, userId);
     } else {
       const newAccountData: Omit<Account, 'id'> = {
         name: accountName,
@@ -68,7 +78,7 @@ const AccountManagement: React.FC = () => {
         category,
         balance
       };
-      await addAccountToFirebase(newAccountData);
+      await addAccountToFirebase(newAccountData, userId);
     }
     setShowModal(false);
     // Firestore listener in AppContext will update the state

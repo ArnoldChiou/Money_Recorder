@@ -4,6 +4,7 @@ import { useState, useEffect, FC, ChangeEvent } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { ModalConfig, TransactionType } from '../types';
 import { updateUserDataInFirebase } from '../contexts/AppContext'; // <--- 引入
+import { useAuthUser } from '../hooks/useAuthUser';
 
 interface AddNewModalProps {
     isOpen: boolean;
@@ -13,6 +14,8 @@ interface AddNewModalProps {
 
 const AddNewModal: FC<AddNewModalProps> = ({ isOpen, onClose, config }) => {
     const { state } = useAppContext(); // <-- 移除了 dispatch，只保留 state
+    const { user } = useAuthUser();
+    const userId = user?.uid;
     const [name, setName] = useState<string>('');
     const [message, setMessage] = useState<string>('');
 
@@ -28,6 +31,10 @@ const AddNewModal: FC<AddNewModalProps> = ({ isOpen, onClose, config }) => {
     const modeLabel = mode === 'category' ? '分類' : '項目';
 
     const handleSave = async () => { // <--- 改為 async
+        if (!userId) {
+            setMessage('請先登入');
+            return;
+        }
         setMessage('');
         const trimmedName = name.trim();
         if (!trimmedName) {
@@ -64,7 +71,7 @@ const AddNewModal: FC<AddNewModalProps> = ({ isOpen, onClose, config }) => {
             newUserData.items[transactionType][categoryName] = [...currentItems[categoryName], trimmedName];
         }
 
-        await updateUserDataInFirebase(newUserData); // <--- 呼叫 Firebase 函式更新
+        await updateUserDataInFirebase(newUserData, userId); // <--- 呼叫 Firebase 函式更新
         onClose(trimmedName); // 關閉 Modal 並傳回新值
     };
 

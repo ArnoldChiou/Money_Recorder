@@ -17,10 +17,7 @@ import {
     DocumentData,
     QueryDocumentSnapshot
 } from "firebase/firestore";
-
-const TRANSACTIONS_COLLECTION = 'transactions';
-const USER_DATA_DOC_PATH = 'userData/main';
-const ACCOUNTS_COLLECTION = 'accounts';
+import { useAuthUser } from '../hooks/useAuthUser';
 
 const initialState: AppState = {
     transactions: [],
@@ -65,53 +62,53 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     }
 };
 
-export const addTransactionToFirebase = async (transactionData: Omit<Transaction, 'id'>) => {
+export const addTransactionToFirebase = async (transactionData: Omit<Transaction, 'id'>, userId: string) => {
     try {
-        await addDoc(collection(db, TRANSACTIONS_COLLECTION), transactionData);
+        await addDoc(collection(db, `users/${userId}/transactions`), transactionData);
     } catch (error) {
         console.error("Error adding transaction: ", error);
         alert("新增失敗，請檢查網路連線或稍後再試。");
     }
 };
 
-export const deleteTransactionFromFirebase = async (id: string) => {
+export const deleteTransactionFromFirebase = async (id: string, userId: string) => {
     try {
-        await deleteDoc(doc(db, TRANSACTIONS_COLLECTION, id));
+        await deleteDoc(doc(db, `users/${userId}/transactions`, id));
     } catch (error) {
         console.error("Error deleting transaction: ", error);
         alert("刪除失敗！");
     }
 };
 
-export const updateTransactionInFirebase = async (transaction: Transaction) => {
+export const updateTransactionInFirebase = async (transaction: Transaction, userId: string) => {
     try {
         const { id, ...dataToUpdate } = transaction;
-        await updateDoc(doc(db, TRANSACTIONS_COLLECTION, id), dataToUpdate);
+        await updateDoc(doc(db, `users/${userId}/transactions`, id), dataToUpdate);
     } catch (error) {
         console.error("Error updating transaction: ", error);
         alert("更新失敗！");
     }
 };
 
-export const updateUserDataInFirebase = async (newUserData: UserDefinedData) => {
+export const updateUserDataInFirebase = async (newUserData: UserDefinedData, userId: string) => {
      try {
-        await setDoc(doc(db, USER_DATA_DOC_PATH), newUserData);
+        await setDoc(doc(db, `users/${userId}/userData/main`), newUserData);
     } catch (error) {
         console.error("Error updating user data: ", error);
         alert("更新分類/項目失敗！");
     }
 };
 
-export const addAccountToFirebase = async (accountData: Omit<Account, 'id'>) => {
+export const addAccountToFirebase = async (accountData: Omit<Account, 'id'>, userId: string) => {
     try {
-        await addDoc(collection(db, ACCOUNTS_COLLECTION), accountData);
+        await addDoc(collection(db, `users/${userId}/accounts`), accountData);
     } catch (error) {
         console.error("Error adding account: ", error);
         alert("新增帳戶失敗，請檢查網路連線或稍後再試。");
     }
 };
 
-export const updateAccountInFirebase = async (account: Account) => {
+export const updateAccountInFirebase = async (account: Account, userId: string) => {
     try {
         const { id, ...dataToUpdate } = account;
         if (!id) {
@@ -119,16 +116,16 @@ export const updateAccountInFirebase = async (account: Account) => {
             alert("更新帳戶失敗：帳戶ID缺失。");
             return;
         }
-        await updateDoc(doc(db, ACCOUNTS_COLLECTION, id), dataToUpdate);
+        await updateDoc(doc(db, `users/${userId}/accounts`, id), dataToUpdate);
     } catch (error) {
         console.error("Error updating account: ", error);
         alert("更新帳戶失敗！");
     }
 };
 
-export const deleteAccountFromFirebase = async (id: string) => {
+export const deleteAccountFromFirebase = async (id: string, userId: string) => {
     try {
-        await deleteDoc(doc(db, ACCOUNTS_COLLECTION, id));
+        await deleteDoc(doc(db, `users/${userId}/accounts`, id));
     } catch (error) {
         console.error("Error deleting account: ", error);
         alert("刪除帳戶失敗！");
@@ -141,9 +138,14 @@ interface AppProviderProps {
 
 export const AppProvider: FC<AppProviderProps> = ({ children }) => {
     const [state, dispatch] = useReducer(appReducer, initialState);
+    const { user } = useAuthUser();
+
+    // 依 user 決定 collection 路徑
+    const userId = user?.uid;
 
     useEffect(() => {
-        const q = query(collection(db, TRANSACTIONS_COLLECTION), orderBy("date", "desc"));
+        if (!userId) return;
+        const q = query(collection(db, `users/${userId}/transactions`), orderBy("date", "desc"));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const transactionsFromDb: Transaction[] = [];
             querySnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
@@ -154,25 +156,26 @@ export const AppProvider: FC<AppProviderProps> = ({ children }) => {
             console.error("Error listening to transactions: ", error);
         });
         return () => unsubscribe();
-    }, []);
+    }, [userId]);
 
     useEffect(() => {
-        const docRef = doc(db, USER_DATA_DOC_PATH);
+        if (!userId) return;
+        const docRef = doc(db, `users/${userId}/userData/main`);
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
                 dispatch({ type: 'SET_USER_DATA', payload: docSnap.data() as UserDefinedData });
             } else {
-                console.log("No UserData found, using initial state and trying to save it.");
-                updateUserDataInFirebase(initialState.userDefinedData);
+                updateUserDataInFirebase(initialState.userDefinedData, userId);
             }
         }, (error) => {
             console.error("Error listening to user data: ", error);
         });
         return () => unsubscribe();
-    }, []);
+    }, [userId]);
 
     useEffect(() => {
-        const q = query(collection(db, ACCOUNTS_COLLECTION), orderBy("name"));
+        if (!userId) return;
+        const q = query(collection(db, `users/${userId}/accounts`), orderBy("name"));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const accountsFromDb: Account[] = [];
             querySnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
@@ -183,7 +186,7 @@ export const AppProvider: FC<AppProviderProps> = ({ children }) => {
             console.error("Error listening to accounts: ", error);
         });
         return () => unsubscribe();
-    }, []);
+    }, [userId]);
 
     return (
         <AppContext.Provider value={{ state, dispatch }}>

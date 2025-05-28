@@ -1,6 +1,9 @@
 // src/components/Sidebar.tsx
 import * as React from 'react';
 import { useState, useEffect, useRef, useCallback, MouseEvent as ReactMouseEvent } from 'react';
+import { signOut } from 'firebase/auth';
+import { auth } from '../firebaseConfig';
+import { useAuthUser } from '../hooks/useAuthUser';
 
 const Sidebar: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -12,6 +15,7 @@ const Sidebar: React.FC = () => {
     const sidebarRef = useRef<HTMLElement | null>(null);
     const mainContentRef = useRef<HTMLElement | null>(null);
     const resizerRef = useRef<HTMLDivElement | null>(null);
+    const { user } = useAuthUser();
 
     const minSidebarWidth = 180;
     const maxSidebarWidth = 400;
@@ -158,6 +162,12 @@ const Sidebar: React.FC = () => {
                   <a href="#report-section-target" className="sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200" onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📈 財務總覽</a>
                   <a href="#accounts" className="sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200" onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📂 帳戶管理</a>
                 </div>
+                {user && (
+                  <div className="mt-6 border-t border-slate-700 pt-4 text-sm flex flex-col gap-2">
+                    <span className="text-gray-300">{user.email}</span>
+                    <button onClick={() => signOut(auth)} className="text-indigo-300 hover:underline">登出</button>
+                  </div>
+                )}
                 <div
                     id="sidebar-resizer"
                     ref={resizerRef}

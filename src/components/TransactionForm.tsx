@@ -3,17 +3,20 @@ import * as React from 'react';
 import { useState, useEffect, FC, ChangeEvent, FormEvent } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { TransactionType } from '../types';
-import { addTransactionToFirebase } from '../contexts/AppContext'; // <--- 引入
+import { addTransactionToFirebase } from '../contexts/AppContext';
+import { useAuthUser } from '../hooks/useAuthUser';
 
 interface TransactionFormProps {
     currentFormType: TransactionType;
     setCurrentFormType: (type: TransactionType) => void;
     openModal: (mode: 'category' | 'item', transactionType: TransactionType, categoryName?: string, activeSelectElement?: HTMLSelectElement | null) => void;
-    newlyAddedItem?: string | null; // 新增
+    newlyAddedItem?: string | null;
 }
 
 const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrentFormType, openModal, newlyAddedItem }) => {
-    const { state } = useAppContext(); // <-- 移除了 dispatch
+    const { state } = useAppContext();
+    const { user } = useAuthUser();
+    const userId = user?.uid;
     const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [category, setCategory] = useState<string>('');
     const [description, setDescription] = useState<string>('');
@@ -24,42 +27,40 @@ const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrent
 
     useEffect(() => {
         const currentCategories = state.userDefinedData.categories[currentFormType] || [];
-        // Only set/reset category if no category is selected or the current one is invalid
         if (!category || !currentCategories.includes(category)) {
             setCategory(currentCategories.length > 0 ? currentCategories[0] : '');
         }
-    }, [currentFormType, state.userDefinedData.categories, category]); // Added category to dependencies
+    }, [currentFormType, state.userDefinedData.categories, category]);
 
     useEffect(() => {
-        // items is derived from the current category
         if (newlyAddedItem && items.includes(newlyAddedItem)) {
             setDescription(newlyAddedItem);
         } else {
-            // Only set/reset description if no description is selected or the current one is invalid for the items list
             if (!description || !items.includes(description)) {
-                setDescription(items.length > 0 ? items[0] : ''); // Default to the first item
+                setDescription(items.length > 0 ? items[0] : '');
             }
         }
-    }, [items, newlyAddedItem, description]); // Added description to dependencies
+    }, [items, newlyAddedItem, description]);
 
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => { // <--- 改為 async
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const parsedAmount = parseFloat(amount);
         if (!category || category.startsWith('__add_new_') || !description || description.startsWith('__add_new_') || description === "" || !amount || isNaN(parsedAmount) || parsedAmount <= 0) {
             alert("請填寫所有有效欄位並選擇有效的項目。");
             return;
         }
-        // 不需要 dispatch，直接呼叫 Firebase 函式
-        await addTransactionToFirebase({ // <--- 呼叫，不包含 id
+        if (!userId) {
+            alert('請先登入');
+            return;
+        }
+        await addTransactionToFirebase({
             type: currentFormType,
             date,
             category,
             description,
             amount: parsedAmount
-        });
-        // 清空表單 (除了日期)
+        }, userId);
         setAmount('');
-        // Category 和 Description 會由 useEffect 自動設定
     };
 
     const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -78,14 +79,14 @@ const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrent
                 openModal('item', currentFormType, category, e.target);
             } else {
                 alert("請先選擇一個有效的分類。");
-                e.target.value = description; // Revert selection
+                e.target.value = description;
             }
         } else {
             setDescription(value);
         }
     };
 
-     const handleTypeChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const handleTypeChange = (e: ChangeEvent<HTMLInputElement>) => {
         setCurrentFormType(e.target.value as TransactionType);
     };
 
@@ -116,7 +117,7 @@ const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrent
                         <option value={`__add_new_category_${currentFormType}__`}>＋ 新增{currentFormType === 'expense' ? '支出' : '收入'}分類...</option>
                     </select>
                 </div>
-                 <div>
+                <div>
                     <label htmlFor="description-form" className="block text-sm font-medium text-gray-700">項目</label>
                     <select id="description-form" value={description} onChange={handleDescriptionChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                         {category && !category.startsWith('__add_new_') ? (

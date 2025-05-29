@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { auth } from '../firebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
 
@@ -14,6 +14,25 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [autoLogin, setAutoLogin] = useState(false);
+
+  useEffect(() => {
+    // 嘗試從 localStorage 取得自動登入 email
+    const saved = localStorage.getItem('autoLoginEmail');
+    if (saved) {
+      setEmail(saved);
+      setAutoLogin(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    // 如果 firebase 已登入，直接觸發 onAuthSuccess
+    if (auth.currentUser) {
+      onAuthSuccess(auth.currentUser);
+      onClose();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -27,6 +46,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
         userCredential = await createUserWithEmailAndPassword(auth, email, password);
       } else {
         userCredential = await signInWithEmailAndPassword(auth, email, password);
+      }
+      // 自動登入功能：只記錄 email，不存密碼
+      if (autoLogin) {
+        localStorage.setItem('autoLoginEmail', email);
+      } else {
+        localStorage.removeItem('autoLoginEmail');
       }
       onAuthSuccess(userCredential.user);
       onClose();
@@ -58,6 +83,18 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
             className="border rounded px-3 py-2"
             required
           />
+          {/* 自動登入選項 */}
+          {!isRegister && (
+            <label className="flex items-center text-sm select-none">
+              <input
+                type="checkbox"
+                checked={autoLogin}
+                onChange={e => setAutoLogin(e.target.checked)}
+                className="mr-2"
+              />
+              自動登入
+            </label>
+          )}
           {error && <div className="text-red-500 text-sm text-center">{error}</div>}
           <button
             type="submit"

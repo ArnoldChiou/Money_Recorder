@@ -15,7 +15,8 @@ import {
     getDoc,
     setDoc,
     DocumentData,
-    QueryDocumentSnapshot
+    QueryDocumentSnapshot,
+    runTransaction
 } from "firebase/firestore";
 import { useAuthUser } from '../hooks/useAuthUser';
 
@@ -63,8 +64,23 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
 };
 
 export const addTransactionToFirebase = async (transactionData: Omit<Transaction, 'id'>, userId: string) => {
+    const accountRef = doc(db, `users/${userId}/accounts`, transactionData.accountId);
+    const newTransactionRef = doc(collection(db, `users/${userId}/transactions`));
+
     try {
-        await addDoc(collection(db, `users/${userId}/transactions`), transactionData);
+        await runTransaction(db, async (transaction) => {
+            const accountDoc = await transaction.get(accountRef);
+            if (!accountDoc.exists()) {
+                throw new Error("Account not found!");
+            }
+            const accountData = accountDoc.data();
+            const newBalance = transactionData.type === 'income' 
+                ? accountData.balance + transactionData.amount 
+                : accountData.balance - transactionData.amount;
+            
+            transaction.update(accountRef, { balance: newBalance });
+            transaction.set(newTransactionRef, transactionData);
+        });
     } catch (error) {
         console.error("Error adding transaction: ", error);
         alert("新增失敗，請檢查網路連線或稍後再試。");
@@ -72,21 +88,88 @@ export const addTransactionToFirebase = async (transactionData: Omit<Transaction
 };
 
 export const deleteTransactionFromFirebase = async (id: string, userId: string) => {
+    const transactionRef = doc(db, `users/${userId}/transactions`, id);
     try {
-        await deleteDoc(doc(db, `users/${userId}/transactions`, id));
+        await runTransaction(db, async (transaction) => {
+            const transactionDoc = await transaction.get(transactionRef);
+            if (!transactionDoc.exists()) {
+                throw new Error("Transaction not found!");
+            }
+            const transactionData = transactionDoc.data() as Omit<Transaction, 'id'>;
+            const accountRef = doc(db, `users/${userId}/accounts`, transactionData.accountId);
+            const accountDoc = await transaction.get(accountRef);
+
+            if (accountDoc.exists()) {
+                const accountData = accountDoc.data();
+                const newBalance = transactionData.type === 'income'
+                    ? accountData.balance - transactionData.amount
+                    : accountData.balance + transactionData.amount;
+                transaction.update(accountRef, { balance: newBalance });
+            }
+
+            transaction.delete(transactionRef);
+        });
     } catch (error) {
         console.error("Error deleting transaction: ", error);
         alert("刪除失敗！");
     }
 };
 
-export const updateTransactionInFirebase = async (transaction: Transaction, userId: string) => {
+export const updateTransactionInFirebase = async (transactionData: Transaction, userId: string) => {
+    const transactionRef = doc(db, `users/${userId}/transactions`, transactionData.id);
     try {
-        const { id, ...dataToUpdate } = transaction;
-        await updateDoc(doc(db, `users/${userId}/transactions`, id), dataToUpdate);
+        await runTransaction(db, async (transaction) => {
+            // 1. Read all necessary documents first.
+            const transactionDoc = await transaction.get(transactionRef);
+            if (!transactionDoc.exists()) {
+                throw new Error("Transaction not found!");
+            }
+            const originalTransaction = { id: transactionDoc.id, ...transactionDoc.data() } as Transaction;
+
+            const originalAccountRef = doc(db, `users/${userId}/accounts`, originalTransaction.accountId);
+            const originalAccountDoc = await transaction.get(originalAccountRef);
+            if (!originalAccountDoc.exists()) {
+                throw new Error(`Original account with id ${originalTransaction.accountId} not found!`);
+            }
+
+            const isSameAccount = originalTransaction.accountId === transactionData.accountId;
+            let newAccountDoc = null;
+            if (!isSameAccount) {
+                const newAccountRef = doc(db, `users/${userId}/accounts`, transactionData.accountId);
+                newAccountDoc = await transaction.get(newAccountRef);
+                if (!newAccountDoc.exists()) {
+                    throw new Error(`New account with id ${transactionData.accountId} not found!`);
+                }
+            }
+
+            // 2. Perform all calculations locally based on the read data.
+            const originalAccountData = originalAccountDoc.data();
+            const balanceAfterRevert = originalTransaction.type === 'income'
+                ? originalAccountData.balance - originalTransaction.amount
+                : originalAccountData.balance + originalTransaction.amount;
+
+            // 3. Perform all writes at the end.
+            if (isSameAccount) {
+                const finalBalance = transactionData.type === 'income'
+                    ? balanceAfterRevert + transactionData.amount
+                    : balanceAfterRevert - transactionData.amount;
+                transaction.update(originalAccountRef, { balance: finalBalance });
+            } else {
+                transaction.update(originalAccountRef, { balance: balanceAfterRevert });
+                
+                const newAccountData = newAccountDoc!.data();
+                const newBalanceForNewAccount = transactionData.type === 'income'
+                    ? newAccountData.balance + transactionData.amount
+                    : newAccountData.balance - transactionData.amount;
+                transaction.update(doc(db, `users/${userId}/accounts`, transactionData.accountId), { balance: newBalanceForNewAccount });
+            }
+
+            const { id, ...dataToUpdate } = transactionData;
+            transaction.update(transactionRef, dataToUpdate);
+        });
     } catch (error) {
         console.error("Error updating transaction: ", error);
-        alert("更新失敗！");
+        alert(`更新失敗！${error instanceof Error ? error.message : ''}`);
     }
 };
 

@@ -25,6 +25,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ openModal }) => {
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">類型</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">分類</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">項目</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">帳戶</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">金額</th>
                         <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">操作</th>
                     </tr>

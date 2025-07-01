@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { useState, useEffect, FC, ChangeEvent, FormEvent } from 'react';
 import { useAppContext } from '../contexts/AppContext';
-import { TransactionType } from '../types';
+import { TransactionType, Account } from '../types';
 import { addTransactionToFirebase } from '../contexts/AppContext';
 import { useAuthUser } from '../hooks/useAuthUser';
 
@@ -21,9 +21,26 @@ const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrent
     const [category, setCategory] = useState<string>('');
     const [description, setDescription] = useState<string>('');
     const [amount, setAmount] = useState<string>('');
+    const [accountId, setAccountId] = useState<string>('');
 
+    const { accounts } = state;
     const categories = state.userDefinedData.categories[currentFormType] || [];
     const items = (category && state.userDefinedData.items[currentFormType]?.[category]) || [];
+
+    const groupedAccounts = accounts.reduce((acc, account) => {
+        const groupLabel = account.type === 'asset' ? '資產' : '負債';
+        if (!acc[groupLabel]) {
+            acc[groupLabel] = [];
+        }
+        acc[groupLabel].push(account);
+        return acc;
+    }, {} as Record<string, Account[]>);
+
+    useEffect(() => {
+        if (accounts && accounts.length > 0 && !accountId) {
+            setAccountId(accounts[0].id);
+        }
+    }, [accounts, accountId]);
 
     useEffect(() => {
         const currentCategories = state.userDefinedData.categories[currentFormType] || [];
@@ -45,7 +62,7 @@ const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrent
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const parsedAmount = parseFloat(amount);
-        if (!category || category.startsWith('__add_new_') || !description || description.startsWith('__add_new_') || description === "" || !amount || isNaN(parsedAmount) || parsedAmount <= 0) {
+        if (!accountId || !category || category.startsWith('__add_new_') || !description || description.startsWith('__add_new_') || description === "" || !amount || isNaN(parsedAmount) || parsedAmount <= 0) {
             alert("請填寫所有有效欄位並選擇有效的項目。");
             return;
         }
@@ -58,7 +75,8 @@ const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrent
             date,
             category,
             description,
-            amount: parsedAmount
+            amount: parsedAmount,
+            accountId
         }, userId);
         setAmount('');
     };
@@ -105,10 +123,22 @@ const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrent
                     <label htmlFor="type-income-form">收入</label>
                 </div>
             </div>
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
                 <div>
                     <label htmlFor="date-form" className="block text-sm font-medium text-gray-700">日期</label>
                     <input type="date" id="date-form" value={date} onChange={(e: ChangeEvent<HTMLInputElement>) => setDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                </div>
+                <div>
+                    <label htmlFor="account-form" className="block text-sm font-medium text-gray-700">帳戶</label>
+                    <select id="account-form" value={accountId} onChange={(e) => setAccountId(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        {Object.entries(groupedAccounts).map(([groupName, groupAccounts]) => (
+                            <optgroup label={groupName} key={groupName}>
+                                {(groupAccounts as Account[]).map(acc => (
+                                    <option key={acc.id} value={acc.id}>{acc.name} ({acc.category})</option>
+                                ))}
+                            </optgroup>
+                        ))}
+                    </select>
                 </div>
                 <div>
                     <label htmlFor="category-form" className="block text-sm font-medium text-gray-700">分類</label>

@@ -8,6 +8,7 @@ export interface Transaction {
   category: string;
   description: string;
   amount: number;
+  accountId: string; // 新增帳戶ID
 }
 
 export interface UserDefinedData {

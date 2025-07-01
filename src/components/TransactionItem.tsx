@@ -31,6 +31,8 @@ const TransactionItem: FC<TransactionItemProps> = ({ transaction, openModal, ind
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [editData, setEditData] = useState<Transaction>({ ...transaction });
 
+    const account = state.accounts.find(acc => acc.id === transaction.accountId);
+
     const availableCategories = state.userDefinedData.categories[editData.type] || [];
     const availableItems = (editData.category && state.userDefinedData.items[editData.type]?.[editData.category]) || [];
 
@@ -145,6 +147,11 @@ const TransactionItem: FC<TransactionItemProps> = ({ transaction, openModal, ind
                             {editData.category && !editData.category.startsWith('__add_new_') && <option value={`__add_new_item_${editData.type}__`}>＋ 新增項目...</option>}
                         </select>
                     </td>
+                    <td className="px-4 py-2">
+                        <select name="accountId" value={editData.accountId} onChange={handleChange} className="editing-input text-sm">
+                            {state.accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+                        </select>
+                    </td>
                     <td className="px-4 py-2"><input type="number" name="amount" value={editData.amount} onChange={handleChange} className="editing-input text-sm" min="0" step="0.01"/></td>
                     <td className="px-4 py-2 text-center action-buttons whitespace-nowrap">
                         <button onClick={handleSave} className="px-3 py-1 text-xs font-medium text-white bg-green-500 hover:bg-green-600 rounded shadow-sm">儲存</button>
@@ -157,6 +164,7 @@ const TransactionItem: FC<TransactionItemProps> = ({ transaction, openModal, ind
                     <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>{transaction.type === 'income' ? '收入' : '支出'}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm"><span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getCategoryColorClass(transaction.category, transaction.type)}`}>{transaction.category}</span></td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{transaction.description}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{account ? account.name : 'N/A'}</td>
                     <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${transaction.type === 'income' ? 'amount-income' : 'amount-expense'}`}>${transaction.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     <td className="px-4 py-3 text-center action-buttons whitespace-nowrap">
                         <button onClick={handleEditToggle} className="px-3 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 rounded hover:bg-indigo-100">編輯</button>

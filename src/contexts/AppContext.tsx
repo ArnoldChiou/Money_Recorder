@@ -187,7 +187,7 @@ export const addAccountToFirebase = async (accountData: Omit<Account, 'id'>, use
         await addDoc(collection(db, `users/${userId}/accounts`), accountData);
     } catch (error) {
         console.error("Error adding account: ", error);
-        alert("新增帳戶失敗，請檢查網路連線或稍後再試。");
+        alert(`新增帳戶失敗，請檢查網路連線或稍後再試。\n錯誤訊息：${error instanceof Error ? error.message : String(error)}`);
     }
 };
 

@@ -17,21 +17,24 @@ const AccountManagement: React.FC = () => {
   const [assetCategory, setAssetCategory] = useState<AssetCategory>('銀行存款');
   const [liabilityCategory, setLiabilityCategory] = useState<LiabilityCategory>('信用卡');
   const [balance, setBalance] = useState(0);
+  const [currency, setCurrency] = useState<'TWD' | 'USD'>('TWD');
+  const [toast, setToast] = useState('');
 
   const assetCategories: AssetCategory[] = ['銀行存款', '錢包', '投資', '加密貨幣', '電子票證'];
   const liabilityCategories: LiabilityCategory[] = ['信用卡', '信用卡分期付款', '貸款'];
 
-  const handleAddAccountClick = () => { // Renamed to avoid conflict if any
+  const handleAddAccountClick = () => {
     setCurrentAccount(null);
     setAccountName('');
     setAccountType('asset');
     setAssetCategory('銀行存款');
     setLiabilityCategory('信用卡');
     setBalance(0);
+    setCurrency('TWD');
     setShowModal(true);
   };
 
-  const handleEditAccountClick = (account: Account) => { // Renamed to avoid conflict if any
+  const handleEditAccountClick = (account: Account) => {
     setCurrentAccount(account);
     setAccountName(account.name);
     setAccountType(account.type);
@@ -41,10 +44,11 @@ const AccountManagement: React.FC = () => {
       setLiabilityCategory(account.category as LiabilityCategory);
     }
     setBalance(account.balance);
+    setCurrency(account.currency || 'TWD');
     setShowModal(true);
   };
 
-  const handleDeleteAccountClick = async (accountId: string) => { // Renamed to avoid conflict if any
+  const handleDeleteAccountClick = async (accountId: string) => {
     if (!userId) {
       alert('請先登入');
       return;
@@ -54,6 +58,13 @@ const AccountManagement: React.FC = () => {
       // Firestore listener in AppContext will update the state
     }
   };
+
+  React.useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(''), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,19 +79,28 @@ const AccountManagement: React.FC = () => {
         name: accountName,
         type: accountType,
         category,
-        balance
+        balance,
+        currency
       };
+      setToast('帳戶更新成功！');
+      setShowModal(false);
       await updateAccountInFirebase(updatedAccount, userId);
     } else {
-      const newAccountData: Omit<Account, 'id'> = {
-        name: accountName,
-        type: accountType,
-        category,
-        balance
-      };
-      await addAccountToFirebase(newAccountData, userId);
+      setToast('新增帳戶成功！');
+      setShowModal(false);
+      try {
+        const newAccountData: Omit<Account, 'id'> = {
+          name: accountName,
+          type: accountType,
+          category,
+          balance,
+          currency
+        };
+        await addAccountToFirebase(newAccountData, userId);
+      } catch (e) {
+        alert('新增帳戶失敗，請檢查網路連線或稍後再試。');
+      }
     }
-    setShowModal(false);
     // Firestore listener in AppContext will update the state
   };
 
@@ -254,6 +274,19 @@ const AccountManagement: React.FC = () => {
                 />
               </div>
 
+              <div className="mb-4">
+                <label htmlFor="currency" className="block text-sm font-medium text-gray-700">幣別</label>
+                <select
+                  id="currency"
+                  value={currency}
+                  onChange={e => setCurrency(e.target.value as 'TWD' | 'USD')}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                >
+                  <option value="TWD">台幣 (TWD)</option>
+                  <option value="USD">美金 (USD)</option>
+                </select>
+              </div>
+
               <div className="flex justify-end space-x-2">
                 <button
                   type="button"
@@ -271,6 +304,35 @@ const AccountManagement: React.FC = () => {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed left-1/2 z-50 px-4 py-2 rounded shadow-lg"
+          style={{
+            bottom: '24px',
+            minWidth: '120px',
+            textAlign: 'center',
+            background: 'linear-gradient(90deg, #34d399 0%, #059669 100%)',
+            color: 'white',
+            animation: 'toast-slide-in 0.5s cubic-bezier(.22,1.5,.36,1) both, toast-slide-out 0.4s 1.6s cubic-bezier(.4,2,.6,1) both',
+            transform: 'translateX(-50%)',
+          }}
+        >
+          {toast}
+          <style>{`
+            @keyframes toast-slide-in {
+              0% { opacity: 0; transform: translateX(-50%) translateY(60px) scale(0.95); }
+              60% { opacity: 1; transform: translateX(-50%) translateY(-8px) scale(1.04); }
+              80% { transform: translateX(-50%) translateY(4px) scale(0.98); }
+              100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+            }
+            @keyframes toast-slide-out {
+              0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+              100% { opacity: 0; transform: translateX(-50%) translateY(40px) scale(0.97); }
+            }
+          `}</style>
         </div>
       )}
     </div>

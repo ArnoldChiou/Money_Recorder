@@ -62,6 +62,7 @@ export interface Account {
   type: 'asset' | 'liability';
   category: AssetCategory | LiabilityCategory;
   balance: number;
+  currency: 'TWD' | 'USD'; // 幣別
 }
 
 export type AssetCategory = '銀行存款' | '錢包' | '投資' | '加密貨幣' | '電子票證';

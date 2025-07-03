@@ -1,10 +1,12 @@
 // src/components/Sidebar.tsx
 import * as React from 'react';
 import { useState, useEffect, useRef, useCallback, MouseEvent as ReactMouseEvent } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, NavLink } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { useAuthUser } from '../hooks/useAuthUser';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChartPie, faList, faUsers, faCreditCard } from '@fortawesome/free-solid-svg-icons';
 
 const Sidebar: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -162,6 +164,9 @@ const Sidebar: React.FC = () => {
                 <h1 className="text-2xl font-bold mb-6 border-b border-slate-700 pb-3">功能選單</h1>
                 <div className="flex flex-col gap-2 flex-1 justify-start">
                   <Link to="/" className={`sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200 ${isActive('/') ? 'active' : ''}`} onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📝 首頁</Link>
+                  <Link to="/add-transaction" className={`sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200 ${isActive('/add-transaction') ? 'active' : ''}`} onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>➕ 新增紀錄</Link>
+                  <Link to="/transactions" className={`sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200 ${isActive('/transactions') ? 'active' : ''}`} onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>🧾 收支列表</Link>
+                  <Link to="/reports" className={`sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200 ${isActive('/reports') ? 'active' : ''}`} onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📊 財務分析</Link>
                   <Link to="/accounts" className={`sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200 ${isActive('/accounts') ? 'active' : ''}`} onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📂 帳戶管理</Link>
                 </div>
                 {user && (

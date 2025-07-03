@@ -3,13 +3,13 @@ import * as React from 'react';
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
-import TransactionForm from './components/TransactionForm';
 import TransactionList from './components/TransactionList';
 import { useAuthUser } from './hooks/useAuthUser';
 import { signOut } from 'firebase/auth';
 import { auth } from './firebaseConfig';
 import { TransactionType, ModalConfig } from './types';
 import { Suspense } from 'react';
+import TransactionForm from './components/TransactionForm';
 
 const SummaryReport = React.lazy(() => import('./components/SummaryReport'));
 const CategoryPieChart = React.lazy(() => import('./components/CategoryPieChart'));
@@ -17,10 +17,12 @@ const MonthlyTrendChart = React.lazy(() => import('./components/MonthlyTrendChar
 const AddNewModal = React.lazy(() => import('./components/AddNewModal'));
 const AccountManagementPage = React.lazy(() => import('./pages/AccountManagementPage'));
 const AuthModal = React.lazy(() => import('./components/AuthModal'));
+const AddTransactionPage = React.lazy(() => import('./pages/AddTransactionPage'));
+const TransactionListPage = React.lazy(() => import('./pages/TransactionListPage'));
+const ReportPage = React.lazy(() => import('./pages/ReportPage'));
 
 const App: React.FC = () => {
     const { user, loading } = useAuthUser();
-    const [currentFormType, setCurrentFormType] = useState<TransactionType>('expense');
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [modalConfig, setModalConfig] = useState<ModalConfig>({
         mode: '',
@@ -29,6 +31,7 @@ const App: React.FC = () => {
         activeSelectElement: null
     });
     const [newlyAddedItem, setNewlyAddedItem] = useState<string | null>(null);
+    const [currentFormType, setCurrentFormType] = useState<TransactionType>('expense');
 
     React.useEffect(() => {
         const handler = () => setNewlyAddedItem(null);
@@ -122,23 +125,14 @@ const App: React.FC = () => {
                                         <button onClick={() => signOut(auth)} className="text-sm text-indigo-600 hover:underline">登出</button>
                                     </div>
                                 </header>
-                                <section id="form-section-target" className="bg-white/90 rounded-2xl shadow-xl p-4 md:p-6 border border-slate-200">
-                                    <h2 className="text-lg md:text-xl font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                                        <span className="inline-block bg-blue-100 text-blue-600 rounded px-2 py-0.5 text-sm">新增記錄</span>
-                                    </h2>
+                                <section id="add-new" className="bg-white/90 rounded-2xl shadow-xl p-4 md:p-6 border border-slate-200 scroll-mt-16">
+                                    <h2 className="text-2xl font-bold text-slate-800 mb-4 text-center">新增一筆紀錄</h2>
                                     <TransactionForm
                                         currentFormType={currentFormType}
                                         setCurrentFormType={setCurrentFormType}
                                         openModal={handleOpenModal}
                                         newlyAddedItem={newlyAddedItem}
                                     />
-                                </section>
-                                <section id="list-section-target" className="bg-white/90 rounded-2xl shadow-xl p-4 md:p-6 border border-slate-200">
-                                    <h2 className="text-lg md:text-xl font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                                        <span className="inline-block bg-green-100 text-green-600 rounded px-2 py-0.5 text-sm">收支列表</span>
-                                        <span className="text-xs text-gray-400">(可直接編輯)</span>
-                                    </h2>
-                                    <TransactionList openModal={handleOpenModal} />
                                 </section>
                                 <section id="report-section-target" className="bg-white/90 rounded-2xl shadow-xl p-4 md:p-6 border border-slate-200">
                                     <h2 className="text-lg md:text-xl font-semibold text-slate-700 mb-6 text-center flex items-center justify-center gap-2">
@@ -165,6 +159,21 @@ const App: React.FC = () => {
                         <Route path="/accounts" element={
                             <Suspense fallback={<div>載入中...</div>}>
                                 <AccountManagementPage />
+                            </Suspense>
+                        } />
+                        <Route path="/add-transaction" element={
+                            <Suspense fallback={<div>載入中...</div>}>
+                                <AddTransactionPage openModal={handleOpenModal} newlyAddedItem={newlyAddedItem} />
+                            </Suspense>
+                        } />
+                        <Route path="/transactions" element={
+                            <Suspense fallback={<div>載入中...</div>}>
+                                <TransactionListPage openModal={handleOpenModal} />
+                            </Suspense>
+                        } />
+                        <Route path="/reports" element={
+                            <Suspense fallback={<div>載入中...</div>}>
+                                <ReportPage />
                             </Suspense>
                         } />
                     </Routes>

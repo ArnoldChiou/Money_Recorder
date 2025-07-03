@@ -31,7 +31,7 @@
 .transaction-type-toggle {
     display: inline-flex;
     border-radius: 9999px;
-    background-color: #e5e7eb; /* bg-gray-200 */
+    background-color: #334155; /* bg-slate-700 */
     padding: 0.25rem;
     position: relative;
 }
@@ -45,7 +45,7 @@
     font-size: 0.875rem; /* text-sm */
     line-height: 1.25rem;
     font-weight: 500;
-    color: #4b5563; /* text-gray-600 */
+    color: #d1d5db; /* text-slate-300 */
     cursor: pointer;
     z-index: 10;
     transition: color 0.2s ease-in-out;
@@ -55,9 +55,25 @@
     color: #ffffff; /* text-white */
 }
 
-/* Form-specific toggle */
-#type-expense-form:checked ~ #type-income-form + label ~ .glider {
-    transform: translateX(100%);
+.transaction-type-toggle .glider {
+    position: absolute;
+    top: 0.25rem;
+    left: 0.25rem;
+    height: calc(100% - 0.5rem);
+    width: calc(50% - 0.25rem);
+    background-color: #f97316; /* bg-orange-500 */
+    border-radius: 9999px;
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    z-index: 5;
+}
+
+#type-expense-form:checked ~ .glider {
+    transform: translateX(0);
+    background-color: #f97316; /* bg-orange-500 */
+}
+
+#type-income-form:checked ~ .glider {
+    transform: translateX(calc(100% - 0.1rem));
     background-color: #16a34a; /* bg-green-600 */
 }
 

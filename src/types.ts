@@ -25,7 +25,8 @@ export interface UserDefinedData {
 export interface AppState {
   transactions: Transaction[];
   userDefinedData: UserDefinedData;
-  accounts: Account[]; // <-- 新增
+  accounts: Account[];
+  transfers: Transfer[]; // 新增
 }
 
 export type AppAction =
@@ -39,7 +40,9 @@ export type AppAction =
   | { type: 'SET_ACCOUNTS'; payload: Account[] } // <-- 新增
   | { type: 'ADD_ACCOUNT'; payload: Account } // <-- 新增 (用於本地更新，實際操作通過Firebase)
   | { type: 'UPDATE_ACCOUNT'; payload: Account } // <-- 新增 (用於本地更新，實際操作通過Firebase)
-  | { type: 'DELETE_ACCOUNT'; payload: string }; // <-- 新增 (用於本地更新，實際操作通過Firebase)
+  | { type: 'DELETE_ACCOUNT'; payload: string } // <-- 新增 (用於本地更新，實際操作通過Firebase)
+  | { type: 'SET_TRANSFERS'; payload: Transfer[] } // 新增
+  | { type: 'ADD_TRANSFER'; payload: Transfer }; // 新增
 
 export interface AppContextType {
     state: AppState;
@@ -74,3 +77,12 @@ export type LoanType = '房貸' | '信貸' | '車貸'; // Optional: if you want 
 //   interestRate?: number;
 //   dueDate?: string;
 // }
+
+export interface Transfer {
+  id: string;
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  date: string;
+  note?: string;
+}

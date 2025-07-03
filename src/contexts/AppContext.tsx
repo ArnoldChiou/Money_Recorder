@@ -1,7 +1,7 @@
 // src/contexts/AppContext.tsx
 import * as React from 'react';
 import { createContext, useReducer, useEffect, useContext, ReactNode, FC } from 'react';
-import { AppState, AppAction, Transaction, UserDefinedData, TransactionType, AppContextType, Account } from '../types';
+import { AppState, AppAction, Transaction, UserDefinedData, TransactionType, AppContextType, Account, Transfer } from '../types';
 import { db } from '../firebaseConfig';
 import {
     collection,
@@ -32,7 +32,8 @@ const initialState: AppState = {
             income: {"薪資": ["月薪"], "證券": ["股息"]}
         }
     },
-    accounts: []
+    accounts: [],
+    transfers: [] // 新增轉帳紀錄
 };
 
 const AppContext = createContext<AppContextType>({
@@ -48,6 +49,10 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
              return { ...state, userDefinedData: action.payload };
         case 'SET_ACCOUNTS':
              return { ...state, accounts: action.payload };
+        case 'SET_TRANSFERS':
+            return { ...state, transfers: action.payload };
+        case 'ADD_TRANSFER':
+            return { ...state, transfers: [action.payload, ...state.transfers] };
         case 'ADD_TRANSACTION':
         case 'DELETE_TRANSACTION':
         case 'UPDATE_TRANSACTION':
@@ -215,6 +220,37 @@ export const deleteAccountFromFirebase = async (id: string, userId: string) => {
     }
 };
 
+export const addTransferToFirebase = async (transferData: Omit<Transfer, 'id'>, userId: string) => {
+    const fromAccountRef = doc(db, `users/${userId}/accounts`, transferData.fromAccountId);
+    const toAccountRef = doc(db, `users/${userId}/accounts`, transferData.toAccountId);
+    const newTransferRef = doc(collection(db, `users/${userId}/transfers`));
+    try {
+        await runTransaction(db, async (transaction) => {
+            const fromAccountDoc = await transaction.get(fromAccountRef);
+            const toAccountDoc = await transaction.get(toAccountRef);
+            if (!fromAccountDoc.exists() || !toAccountDoc.exists()) {
+                throw new Error("Account not found!");
+            }
+            const fromAccountData = fromAccountDoc.data();
+            const toAccountData = toAccountDoc.data();
+            // 資產轉到負債時，負債減少
+            let fromNewBalance = fromAccountData.balance - transferData.amount;
+            let toNewBalance = toAccountData.balance + transferData.amount;
+            if (fromAccountData.type === 'asset' && toAccountData.type === 'liability') {
+                toNewBalance = toAccountData.balance - transferData.amount;
+            } else if (fromAccountData.type === 'liability' && toAccountData.type === 'asset') {
+                fromNewBalance = fromAccountData.balance + transferData.amount;
+            }
+            transaction.update(fromAccountRef, { balance: fromNewBalance });
+            transaction.update(toAccountRef, { balance: toNewBalance });
+            transaction.set(newTransferRef, transferData);
+        });
+    } catch (error) {
+        console.error("Error transferring money: ", error);
+        alert("轉帳失敗，請檢查網路連線或稍後再試。");
+    }
+};
+
 interface AppProviderProps {
     children: ReactNode;
 }
@@ -271,6 +307,21 @@ export const AppProvider: FC<AppProviderProps> = ({ children }) => {
         return () => unsubscribe();
     }, [userId]);
 
+    useEffect(() => {
+        if (!userId) return;
+        const q = query(collection(db, `users/${userId}/transfers`), orderBy("date", "desc"));
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const transfersFromDb: Transfer[] = [];
+            querySnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+                transfersFromDb.push({ id: doc.id, ...doc.data() } as Transfer);
+            });
+            dispatch({ type: 'SET_TRANSFERS', payload: transfersFromDb });
+        }, (error) => {
+            console.error("Error listening to transfers: ", error);
+        });
+        return () => unsubscribe();
+    }, [userId]);
+
     return (
         <AppContext.Provider value={{ state, dispatch }}>
             {children}
@@ -278,4 +329,6 @@ export const AppProvider: FC<AppProviderProps> = ({ children }) => {
     );
 };
 
-export const useAppContext = (): AppContextType => useContext(AppContext);
+export const useAppContext = () => {
+    return useContext(AppContext);
+};

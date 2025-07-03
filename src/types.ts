@@ -15,7 +15,6 @@ export interface UserDefinedData {
   categories: {
     expense: string[];
     income: string[];
-    liability: string[]; // 新增負債分類
   };
   items: {
     expense: { [key: string]: string[] };

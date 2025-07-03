@@ -26,7 +26,7 @@ const initialState: AppState = {
         categories: {
             expense: ["餐飲", "交通", "購物", "娛樂", "居家", "其他支出", "投資"],
             income: ["薪資", "投資", "副業", "獎金", "其他收入"],
-            liability: ["信用卡", "貸款", "應付款"] // 將信用卡放第一個
+
         },
         items: {
             expense: {

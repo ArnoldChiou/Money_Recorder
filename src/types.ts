@@ -61,7 +61,7 @@ export interface Account {
   balance: number;
 }
 
-export type AssetCategory = '銀行存款' | '錢包' | '證券' | '加密貨幣' | '電子票證';
+export type AssetCategory = '銀行存款' | '錢包' | '投資' | '加密貨幣' | '電子票證';
 export type LiabilityCategory = '信用卡' | '信用卡分期付款' | '貸款';
 
 export type LoanType = '房貸' | '信貸' | '車貸'; // Optional: if you want to specify loan types

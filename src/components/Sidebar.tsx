@@ -1,6 +1,7 @@
 // src/components/Sidebar.tsx
 import * as React from 'react';
 import { useState, useEffect, useRef, useCallback, MouseEvent as ReactMouseEvent } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { useAuthUser } from '../hooks/useAuthUser';
@@ -16,6 +17,7 @@ const Sidebar: React.FC = () => {
     const mainContentRef = useRef<HTMLElement | null>(null);
     const resizerRef = useRef<HTMLDivElement | null>(null);
     const { user } = useAuthUser();
+    const location = useLocation();
 
     const minSidebarWidth = 180;
     const maxSidebarWidth = 400;
@@ -76,6 +78,8 @@ const Sidebar: React.FC = () => {
         handleResize(); // 初始化
         return () => window.removeEventListener('resize', handleResize);
     }, [sidebarWidth]); // 此處的依賴項是為了在拖曳寬度後能正確更新
+
+    const isActive = (path: string) => location.pathname === path;
 
      // Active link highlighting
     useEffect(() => {
@@ -157,10 +161,8 @@ const Sidebar: React.FC = () => {
             >
                 <h1 className="text-2xl font-bold mb-6 border-b border-slate-700 pb-3">功能選單</h1>
                 <div className="flex flex-col gap-2 flex-1 justify-start">
-                  <a href="#form-section-target" className="sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200" onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📝 新增記錄</a>
-                  <a href="#list-section-target" className="sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200" onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📋 收支列表</a>
-                  <a href="#report-section-target" className="sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200" onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📈 財務總覽</a>
-                  <a href="#accounts" className="sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200" onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📂 帳戶管理</a>
+                  <Link to="/" className={`sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200 ${isActive('/') ? 'active' : ''}`} onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📝 首頁</Link>
+                  <Link to="/accounts" className={`sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200 ${isActive('/accounts') ? 'active' : ''}`} onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📂 帳戶管理</Link>
                 </div>
                 {user && (
                   <div className="mt-6 border-t border-slate-700 pt-4 text-sm flex flex-col gap-2">

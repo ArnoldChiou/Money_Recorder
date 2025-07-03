@@ -29,7 +29,7 @@ const initialState: AppState = {
         },
         items: {
             expense: {"餐飲": ["早餐", "午餐", "晚餐", "飲料", "零食"], "交通": ["捷運/公車"]},
-            income: {"薪資": ["月薪"], "投資": ["股息"]}
+            income: {"薪資": ["月薪"], "證券": ["股息"]}
         }
     },
     accounts: []

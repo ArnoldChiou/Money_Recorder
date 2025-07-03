@@ -18,7 +18,7 @@ const AccountManagement: React.FC = () => {
   const [liabilityCategory, setLiabilityCategory] = useState<LiabilityCategory>('信用卡');
   const [balance, setBalance] = useState(0);
 
-  const assetCategories: AssetCategory[] = ['銀行存款', '錢包', '證券', '加密貨幣', '電子票證'];
+  const assetCategories: AssetCategory[] = ['銀行存款', '錢包', '投資', '加密貨幣', '電子票證'];
   const liabilityCategories: LiabilityCategory[] = ['信用卡', '信用卡分期付款', '貸款'];
 
   const handleAddAccountClick = () => { // Renamed to avoid conflict if any
@@ -84,6 +84,23 @@ const AccountManagement: React.FC = () => {
     // Firestore listener in AppContext will update the state
   };
 
+  const assetAccounts = accounts.filter(account => account.type === 'asset');
+  const liabilityAccounts = accounts.filter(account => account.type === 'liability');
+
+  const groupAccountsByCategory = (accounts: Account[]) => {
+    return accounts.reduce((acc, account) => {
+      const { category } = account;
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(account);
+      return acc;
+    }, {} as Record<string, Account[]>);
+  };
+
+  const groupedAssetAccounts = groupAccountsByCategory(assetAccounts);
+  const groupedLiabilityAccounts = groupAccountsByCategory(liabilityAccounts);
+
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">帳戶管理</h2>
@@ -95,30 +112,75 @@ const AccountManagement: React.FC = () => {
       </button>
 
       {/* Accounts List */}
-      <div className="space-y-2">
-        {accounts.map(account => (
-          <div key={account.id} className="p-3 border rounded shadow-sm flex justify-between items-center">
-            <div>
-              <p className="font-semibold">{account.name} ({account.type === 'asset' ? '資產' : '負債'})</p>
-              <p className="text-sm text-gray-600">類別: {account.category}</p>
-              <p className="text-sm text-gray-600">餘額: {account.balance.toLocaleString()}</p>
-            </div>
-            <div className="space-x-2">
-              <button
-                onClick={() => handleEditAccountClick(account)} // Updated handler name
-                className="text-sm bg-yellow-500 hover:bg-yellow-700 text-white py-1 px-2 rounded"
-              >
-                編輯
-              </button>
-              <button
-                onClick={() => handleDeleteAccountClick(account.id)} // Updated handler name
-                className="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded"
-              >
-                刪除
-              </button>
-            </div>
+      <div className="space-y-8">
+        <div>
+          <h3 className="text-2xl font-bold mb-4">資產</h3>
+          <div className="space-y-4">
+            {Object.entries(groupedAssetAccounts).map(([category, accountsInCategory]) => (
+              <div key={category} className="bg-gray-50 p-4 rounded-lg shadow-inner">
+                <h4 className="text-xl font-semibold text-gray-800 mb-3">{category}</h4>
+                <div className="space-y-2">
+                  {accountsInCategory.map(account => (
+                    <div key={account.id} className="bg-white p-3 border rounded shadow-sm flex justify-between items-center">
+                      <div>
+                        <p className="font-semibold">{account.name}</p>
+                        <p className="text-sm text-gray-600">餘額: {account.balance.toLocaleString()}</p>
+                      </div>
+                      <div className="space-x-2">
+                        <button
+                          onClick={() => handleEditAccountClick(account)}
+                          className="text-sm bg-yellow-500 hover:bg-yellow-700 text-white py-1 px-2 rounded"
+                        >
+                          編輯
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAccountClick(account.id)}
+                          className="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded"
+                        >
+                          刪除
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
+        <div>
+          <h3 className="text-2xl font-bold mb-4">負債</h3>
+          <div className="space-y-4">
+            {Object.entries(groupedLiabilityAccounts).map(([category, accountsInCategory]) => (
+              <div key={category} className="bg-gray-50 p-4 rounded-lg shadow-inner">
+                <h4 className="text-xl font-semibold text-gray-800 mb-3">{category}</h4>
+                <div className="space-y-2">
+                  {accountsInCategory.map(account => (
+                    <div key={account.id} className="bg-white p-3 border rounded shadow-sm flex justify-between items-center">
+                      <div>
+                        <p className="font-semibold">{account.name}</p>
+                        <p className="text-sm text-gray-600">餘額: {account.balance.toLocaleString()}</p>
+                      </div>
+                      <div className="space-x-2">
+                        <button
+                          onClick={() => handleEditAccountClick(account)}
+                          className="text-sm bg-yellow-500 hover:bg-yellow-700 text-white py-1 px-2 rounded"
+                        >
+                          編輯
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAccountClick(account.id)}
+                          className="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded"
+                        >
+                          刪除
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Add/Edit Modal */}

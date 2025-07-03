@@ -166,7 +166,18 @@ const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrent
         const categories = accounts
             .filter(acc => acc.type === accountTypeFilter)
             .map(acc => acc.category);
-        return [...new Set(categories)];
+        const uniqueCategories = [...new Set(categories)];
+        // 自訂排序
+        const customOrder = ['銀行存款', '投資', '錢包', '加密貨幣', '電子票證'];
+        uniqueCategories.sort((a, b) => {
+            const aIdx = customOrder.indexOf(a as string);
+            const bIdx = customOrder.indexOf(b as string);
+            if (aIdx === -1 && bIdx === -1) return a.localeCompare(b);
+            if (aIdx === -1) return 1;
+            if (bIdx === -1) return -1;
+            return aIdx - bIdx;
+        });
+        return uniqueCategories;
     }, [accounts, accountTypeFilter]);
 
     useEffect(() => {
@@ -396,7 +407,10 @@ const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrent
                             type="button"
                             aria-label="開啟計算機"
                             onClick={() => {
-                                const balance = selectedAccount && typeof selectedAccount.balance === 'number' ? String(selectedAccount.balance) : '';
+                                // 只有支出時才自動填入餘額，收入時預設空字串
+                                const balance = (currentFormType === 'expense' && selectedAccount && typeof selectedAccount.balance === 'number')
+                                    ? String(selectedAccount.balance)
+                                    : '';
                                 setShowCalculator(balance);
                             }}
                             className="absolute inset-y-0 right-2 flex items-center px-1 text-gray-500 hover:text-indigo-600 focus:outline-none"

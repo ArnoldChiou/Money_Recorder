@@ -20,6 +20,7 @@ const AuthModal = React.lazy(() => import('./components/AuthModal'));
 const AddTransactionPage = React.lazy(() => import('./pages/AddTransactionPage'));
 const TransactionListPage = React.lazy(() => import('./pages/TransactionListPage'));
 const ReportPage = React.lazy(() => import('./pages/ReportPage'));
+const CloudCarrierPage = React.lazy(() => import('./pages/CloudCarrierPage'));
 
 const App: React.FC = () => {
     const { user, loading } = useAuthUser();
@@ -174,6 +175,11 @@ const App: React.FC = () => {
                         <Route path="/reports" element={
                             <Suspense fallback={<div>載入中...</div>}>
                                 <ReportPage />
+                            </Suspense>
+                        } />
+                        <Route path="/cloud-carrier" element={
+                            <Suspense fallback={<div>載入中...</div>}>
+                                <CloudCarrierPage />
                             </Suspense>
                         } />
                     </Routes>

@@ -168,6 +168,7 @@ const Sidebar: React.FC = () => {
                   <Link to="/transactions" className={`sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200 ${isActive('/transactions') ? 'active' : ''}`} onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>🧾 收支列表</Link>
                   <Link to="/reports" className={`sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200 ${isActive('/reports') ? 'active' : ''}`} onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📊 財務分析</Link>
                   <Link to="/accounts" className={`sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200 ${isActive('/accounts') ? 'active' : ''}`} onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>📂 帳戶管理</Link>
+                  <Link to="/cloud-carrier" className={`sidebar-link block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition duration-200 ${isActive('/cloud-carrier') ? 'active' : ''}`} onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>☁️ 雲端載具</Link>
                 </div>
                 {user && (
                   <div className="mt-6 border-t border-slate-700 pt-4 text-sm flex flex-col gap-2">

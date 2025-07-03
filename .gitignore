@@ -127,5 +127,4 @@ public/build/
 dist/
 dist-ssr/
 
-src/firebaseConfig.ts
 .firebase/

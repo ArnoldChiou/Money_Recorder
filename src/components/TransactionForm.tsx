@@ -123,7 +123,7 @@ const TransactionForm: FC<TransactionFormProps> = ({ currentFormType, setCurrent
                     <label htmlFor="type-income-form">收入</label>
                 </div>
             </div>
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-4 items-end">
                 <div>
                     <label htmlFor="date-form" className="block text-sm font-medium text-gray-700">日期</label>
                     <input type="date" id="date-form" value={date} onChange={(e: ChangeEvent<HTMLInputElement>) => setDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />

@@ -19,8 +19,6 @@ const AuthModal = React.lazy(() => import('./components/AuthModal'));
 
 const App: React.FC = () => {
     const { user, loading } = useAuthUser();
-    const userId = user?.uid;
-    const [showAuthModal, setShowAuthModal] = useState(false);
     const [currentFormType, setCurrentFormType] = useState<TransactionType>('expense');
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [modalConfig, setModalConfig] = useState<ModalConfig>({
@@ -56,8 +54,6 @@ const App: React.FC = () => {
         }
 
         if (activeSelectElement) {
-            let shouldTriggerChange = false;
-
             if (newlyAddedValue) {
                 let attempts = 0;
                 const maxAttempts = 10;
@@ -82,10 +78,6 @@ const App: React.FC = () => {
             } else if (activeSelectElement.value.startsWith('__add_new_')) {
                 const firstValidOption = Array.from(activeSelectElement.options as unknown as HTMLOptionElement[]).find(opt => !opt.value.startsWith('__add_new_'));
                 activeSelectElement.value = firstValidOption ? firstValidOption.value : "";
-                shouldTriggerChange = true;
-            }
-
-            if (shouldTriggerChange) {
                 const event = new Event('change', { bubbles: true });
                 activeSelectElement.dispatchEvent(event);
             }
@@ -99,15 +91,13 @@ const App: React.FC = () => {
 
     if (!user) {
         return (
-            <>
-                <Suspense fallback={<div>載入中...</div>}>
-                    <AuthModal
-                        isOpen={true}
-                        onClose={() => setShowAuthModal(false)}
-                        onAuthSuccess={() => {}}
-                    />
-                </Suspense>
-            </>
+            <Suspense fallback={<div>載入中...</div>}>
+                <AuthModal
+                    isOpen={true}
+                    onClose={() => {}}
+                    onAuthSuccess={() => {}}
+                />
+            </Suspense>
         );
     }
 
@@ -123,7 +113,7 @@ const App: React.FC = () => {
                         <p className="text-slate-500 text-base md:text-lg text-center max-w-xl">
                             快速記錄、分析你的日常收支，讓財務一目了然。
                         </p>
-                        <div className="absolute top-4 right-4">
+                        <div className="absolute top-4 right-4 hidden md:block">
                             <span className="mr-2 text-gray-600">{user.email}</span>
                             <button onClick={() => signOut(auth)} className="text-sm text-indigo-600 hover:underline">登出</button>
                         </div>
@@ -163,19 +153,19 @@ const App: React.FC = () => {
                                 <Suspense fallback={<div>載入中...</div>}>
                                     <MonthlyTrendChart />
                                 </Suspense>
-                                <section id="accounts" className="bg-white/90 rounded-2xl shadow-xl p-4 md:p-6 border border-slate-200">
-                                    <h2 className="text-lg md:text-xl font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                        </svg>
-                                        帳戶管理
-                                    </h2>
-                                    <Suspense fallback={<div>載入中...</div>}>
-                                        <AccountManagement />
-                                    </Suspense>
-                                </section>
                             </div>
                         </div>
+                    </section>
+                    <section id="accounts" className="bg-white/90 rounded-2xl shadow-xl p-4 md:p-6 border border-slate-200">
+                        <h2 className="text-lg md:text-xl font-semibold text-slate-700 mb-4 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                            帳戶管理
+                        </h2>
+                        <Suspense fallback={<div>載入中...</div>}>
+                            <AccountManagement />
+                        </Suspense>
                     </section>
                 </div>
             </main>

@@ -17,8 +17,9 @@ const TransactionList: React.FC<TransactionListProps> = ({ openModal }) => {
     }
 
     return (
-        <div className="overflow-x-auto shadow border-b border-gray-200 sm:rounded-lg">
-            <table className="min-w-full divide-y divide-gray-200">
+        <div className="space-y-4 md:overflow-x-auto md:shadow md:border-b md:border-gray-200 md:rounded-lg">
+            {/* 在中等螢幕以上恢復表格布局 */}
+            <table className="hidden md:table min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                     <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">日期</th>
@@ -32,10 +33,16 @@ const TransactionList: React.FC<TransactionListProps> = ({ openModal }) => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {transactions.map((transaction: any, index: number) => (
-                        <TransactionItem key={transaction.id} transaction={transaction} openModal={openModal} index={index} />
+                        <TransactionItem key={transaction.id} transaction={transaction} openModal={openModal} index={index} view="desktop" />
                     ))}
                 </tbody>
             </table>
+            {/* 在小螢幕上顯示卡片列表 */}
+            <div className="block md:hidden space-y-3">
+                {transactions.map((transaction: any, index: number) => (
+                    <TransactionItem key={transaction.id} transaction={transaction} openModal={openModal} index={index} view="mobile" />
+                ))}
+            </div>
         </div>
     );
 }

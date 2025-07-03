@@ -1,3 +1,68 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.editing-input {
+    @apply mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm;
+}
+
+.action-buttons button {
+    @apply mx-1;
+}
+
+.amount-income {
+    @apply text-green-600;
+}
+
+.amount-expense {
+    @apply text-red-600;
+}
+
+.resizing-active {
+    cursor: col-resize;
+    user-select: none;
+}
+
+.sidebar-link.active {
+    @apply bg-slate-700;
+}
+
+/* Toggle switch for transaction type */
+.transaction-type-toggle {
+    display: inline-flex;
+    border-radius: 9999px;
+    background-color: #e5e7eb; /* bg-gray-200 */
+    padding: 0.25rem;
+    position: relative;
+}
+
+.transaction-type-toggle input[type="radio"] {
+    display: none;
+}
+
+.transaction-type-toggle label {
+    padding: 0.25rem 0.75rem; /* py-1 px-3 */
+    font-size: 0.875rem; /* text-sm */
+    line-height: 1.25rem;
+    font-weight: 500;
+    color: #4b5563; /* text-gray-600 */
+    cursor: pointer;
+    z-index: 10;
+    transition: color 0.2s ease-in-out;
+}
+
+.transaction-type-toggle input[type="radio"]:checked + label {
+    color: #ffffff; /* text-white */
+}
+
+/* Form-specific toggle */
+#type-expense-form:checked ~ #type-income-form + label ~ .glider {
+    transform: translateX(100%);
+    background-color: #16a34a; /* bg-green-600 */
+}
+
+/* Pie chart toggle */
+#pie-type-expense-chart:checked ~ #pie-type-income-chart + label ~ .glider {
+    transform: translateX(100%);
+    background-color: #16a34a; /* bg-green-600 */
+}

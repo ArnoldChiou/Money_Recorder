@@ -62,21 +62,20 @@ const Sidebar: React.FC = () => {
 
     useEffect(() => {
         const handleResize = () => {
-             mainContentRef.current = document.getElementById('main-content-area'); // Ensure it's set
+             mainContentRef.current = document.getElementById('main-content-area'); // 確保元素存在
             if (window.innerWidth < 768) {
-                setIsMobileMenuOpen(false);
+                setIsMobileMenuOpen(false); // 在視窗變動時自動關閉選單
                 if (mainContentRef.current) mainContentRef.current.style.marginLeft = '0px';
-                if (sidebarRef.current) sidebarRef.current.style.transform = 'translateX(-100%)';
+                // 移除 transform 的直接設定，讓 className 控制
             } else {
                 if (mainContentRef.current) mainContentRef.current.style.marginLeft = `${sidebarWidth}px`;
-                if (sidebarRef.current) sidebarRef.current.style.transform = 'translateX(0%)';
-                 if (sidebarRef.current) sidebarRef.current.style.width = `${sidebarWidth}px`; // Ensure width is set
+                 if (sidebarRef.current) sidebarRef.current.style.width = `${sidebarWidth}px`;
             }
         };
         window.addEventListener('resize', handleResize);
-        handleResize();
+        handleResize(); // 初始化
         return () => window.removeEventListener('resize', handleResize);
-    }, [sidebarWidth]);
+    }, [sidebarWidth]); // 此處的依賴項是為了在拖曳寬度後能正確更新
 
      // Active link highlighting
     useEffect(() => {
@@ -132,7 +131,7 @@ const Sidebar: React.FC = () => {
         sections.forEach(section => observer.observe(section));
 
         return () => sections.forEach(section => observer.unobserve(section));
-    }, []); // Empty dependency array, runs once
+    }, []);
 
 
     return (
@@ -141,6 +140,7 @@ const Sidebar: React.FC = () => {
                 id="mobile-menu-btn"
                 className="md:hidden fixed top-4 left-4 z-50 p-2 bg-slate-700 text-white rounded-md shadow-lg"
                 onClick={toggleMobileMenu}
+                aria-label="開啟選單"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -164,8 +164,8 @@ const Sidebar: React.FC = () => {
                 </div>
                 {user && (
                   <div className="mt-6 border-t border-slate-700 pt-4 text-sm flex flex-col gap-2">
-                    <span className="text-gray-300">{user.email}</span>
-                    <button onClick={() => signOut(auth)} className="text-indigo-300 hover:underline">登出</button>
+                    <span className="text-gray-300 break-all">{user.email}</span>
+                    <button onClick={() => signOut(auth)} className="text-indigo-300 hover:underline text-left">登出</button>
                   </div>
                 )}
                 <div
